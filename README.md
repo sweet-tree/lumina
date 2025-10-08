@@ -23,6 +23,7 @@ This project provides a foundation for a spiritual coaching application that ana
 - ✅ Built RAG service for personalized spiritual guidance
 - ✅ Created comprehensive documentation
 - ✅ Initialized git repository
+- ⚠️ The 15 core teachings in `spiritual_texts.json` are deprecated and will be removed. New content should be added through document uploads to the spiritual-library namespace.
 
 ## Setup
 
@@ -60,7 +61,8 @@ This project provides a foundation for a spiritual coaching application that ana
 
 - Uses Pinecone for efficient vector storage and retrieval
 - Implements reranking using Qwen3-Embedding-8B model for improved relevance
-- Stores 15 core spiritual teachings from Buddhist and Dzogchen traditions
+- Previously stored 15 core spiritual teachings from Buddhist and Dzogchen traditions in the spiritual-teachings namespace
+- Now uses the spiritual-library namespace for uploaded documents
 - Provides similarity search for relevant teachings based on user queries
 
 ### 2. RAG Service
@@ -76,14 +78,10 @@ This project provides a foundation for a spiritual coaching application that ana
 
 ### 3. Knowledge Base
 
-- Contains 15 core teachings in `spiritual_texts.json`
-- Covers key topics:
-  - Present moment awareness
-  - Impermanence and non-attachment
-  - Working with difficult emotions
-  - The path to enlightenment
-  - Compassion and loving-kindness
-  - Mindfulness practices
+- Previously contained 15 core teachings in `spiritual_texts.json`
+- Now relies on uploaded documents in the spiritual-library namespace
+- Admins can upload authentic spiritual texts as PDFs
+- Documents are processed into chunks and stored with metadata (title, author, tradition)
 
 ## Development Roadmap
 

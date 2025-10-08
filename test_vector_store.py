@@ -11,16 +11,7 @@ def main():
     print("Initializing VectorStore...")
     vector_store = VectorStore()
 
-    # Load spiritual teachings
-    print("Loading spiritual teachings...")
-    with open('spiritual_texts.json', 'r') as f:
-        teachings = json.load(f)
-
-    print(f"Loaded {len(teachings)} spiritual teachings")
-
-    # Store teachings in Pinecone
-    print("Storing teachings in Pinecone...")
-    vector_store.upsert_texts(teachings)
+    print("Using uploaded documents from spiritual-library namespace")
     print("Teachings stored successfully!")
 
     # Test retrieval with sample queries

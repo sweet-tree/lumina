@@ -38,11 +38,16 @@ class VectorStore:
     def upsert_texts(self, texts: List[str], namespace: str = "spiritual-teachings") -> None:
         """
         Store texts in the vector database.
+        This method is kept for backward compatibility but is no longer used for new content.
+        New content should be added through document uploads to the spiritual-library namespace.
 
         Args:
             texts: List of text strings to store
             namespace: Namespace to store the vectors in
         """
+        if namespace == "spiritual-teachings":
+            print("Warning: The spiritual-teachings namespace with static teachings is deprecated. Use document uploads instead.")
+
         # Generate embeddings
         embeddings = self.embedding_service.create_embeddings(texts)
 
@@ -178,9 +183,11 @@ class VectorStore:
             # Fallback to original results if reranking fails
             return [{"text": doc, "score": 0.0} for doc in documents[:top_n]]
 
-    def search(self, query: str, top_k: int = 10, namespace: str = "spiritual-teachings") -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 10, namespace: str = "spiritual-library") -> List[Dict[str, Any]]:
         """
         Search for similar vectors and rerank results for better relevance.
+        By default, searches in the spiritual-library namespace which contains uploaded documents.
+        The spiritual-teachings namespace is deprecated and contains only the original 15 test teachings.
 
         Args:
             query: Query string to search for
