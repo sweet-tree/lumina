@@ -10,7 +10,7 @@ This project provides a foundation for a spiritual coaching application that ana
 - Embedding generation with Qwen3-Embedding-8B
 - A knowledge base of spiritual teachings (Buddhist and Dzogchen traditions)
 - RAG pipeline for personalized spiritual guidance
-- Minimal dependencies (only `requests` and `python-dotenv`)
+- Dependencies: `gradio`, `pinecone`, `openai`, `python-dotenv`
 
 ## Current Progress
 
@@ -87,9 +87,9 @@ This project provides a foundation for a spiritual coaching application that ana
 
 ## Development Roadmap
 
-### Phase 1: Simple Gradio Interface (Next Step)
+### Phase 1: Simple Gradio Interface (Completed)
 
-The next development phase will focus on creating a simple user interface using Gradio to enable immediate user interaction. This approach prioritizes user experience and rapid feedback over complex backend systems.
+The first development phase focused on creating a simple user interface using Gradio to enable immediate user interaction. This approach prioritized user experience and rapid feedback over complex backend systems.
 
 **Why this order:**
 
@@ -100,22 +100,40 @@ The next development phase will focus on creating a simple user interface using 
 
 **Implementation Plan:**
 
-- Create a basic Gradio interface with text input for diary entries
-- Display the AI's spiritual guidance response
-- This gives us immediate user interaction capability
-- Collect user feedback to inform future development
+- Created a basic Gradio interface with text input for diary entries
+- Displayed the AI's spiritual guidance response
+- Enabled immediate user interaction capability
+- Collected user feedback to inform future development
 
-### Phase 2: Document Upload and Processing
+### Phase 2: Document Upload and Processing (Completed)
 
-After establishing the basic interface, we will implement document upload functionality to expand the knowledge base.
+Admins can now upload PDF documents to expand the knowledge base with authentic spiritual texts.
 
-**Implementation Plan:**
+**Key Features:**
 
-- Add PDF, DOCX, and TXT upload capabilities
-- Implement text extraction from these file types
-- Process and chunk the text appropriately
-- Add extracted content to our knowledge base in Pinecone
-- Enable users to personalize their spiritual guidance with their own texts
+1. **PDF Upload**: Admins can upload PDF documents through the Gradio interface
+2. **Text Extraction**: Uses pymupdf4llm for high-quality text extraction with markdown formatting
+3. **Smart Chunking**: Text is split into 500-1500 character chunks while preserving paragraph structure
+4. **Metadata Support**: Documents are stored with title, author, and spiritual tradition metadata
+5. **Batch Processing**: Large documents are processed in batches to avoid size limits
+6. **Persistent Storage**: Original PDFs are stored in the `uploads/` directory with UUID filenames
+7. **Metadata Tracking**: Document information is stored in `metadata/documents.json`
+8. **Vector Database**: Text chunks are embedded and stored in Pinecone with metadata
+
+**Storage Architecture:**
+
+- **Original Files**: Stored in `uploads/` directory with UUID filenames
+- **Metadata**: Stored in `metadata/documents.json` with document details
+- **Vector Database**: Chunks stored in Pinecone with metadata for retrieval
+- **Non-Overlapping**: New documents are added to the knowledge base without overwriting existing content
+
+**Usage:**
+
+1. Access the admin interface in the Gradio app
+2. Upload a PDF document
+3. Enter metadata (title, author, tradition)
+4. The system processes the document into chunks and stores it in the knowledge base
+5. The content becomes available for AI-powered retrieval and guidance
 
 ### Phase 3: Enhanced Analysis System
 

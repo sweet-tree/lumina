@@ -6,6 +6,8 @@ A user-friendly interface for the spiritual coach RAG system.
 import gradio as gr
 from gradio.themes import Soft
 from rag import RAGService
+from vector_store import VectorStore
+import os
 
 
 def get_spiritual_guidance(diary_entry):
@@ -39,6 +41,31 @@ def get_spiritual_guidance(diary_entry):
                 "with the AI service or network connection.")
 
 
+def upload_document(file, title, author, tradition):
+    """Handle document upload and processing."""
+    if file is None:
+        return "Please select a PDF file to upload."
+
+    try:
+        # Initialize vector store
+        vector_store = VectorStore()
+
+        # Process and upsert the document
+        result = vector_store.upsert_document(
+            file.name,
+            file.name.split("/")[-1],
+            title,
+            author,
+            tradition
+        )
+
+        return f"Document '{result['metadata']['title']}' uploaded and processed successfully! " \
+            f"Created {result['metadata']['chunk_count']} chunks."
+
+    except Exception as e:
+        return f"Error uploading document: {str(e)}"
+
+
 def create_interface():
     """Create and return the Gradio interface."""
     with gr.Blocks(theme=Soft()) as demo:
@@ -46,6 +73,48 @@ def create_interface():
         gr.Markdown("# 🌿 Spiritual Coach")
         gr.Markdown(
             "Share your thoughts and receive personalized guidance combining psychological principles with authentic spiritual teachings.")
+
+        # Admin Section for Document Upload
+        gr.Markdown("## 📚 Admin Document Management")
+        gr.Markdown("Upload spiritual texts and teachings (Admin only)")
+
+        with gr.Row():
+            with gr.Column():
+                # File upload component
+                file_input = gr.File(
+                    label="Upload PDF Document",
+                    file_types=[".pdf"],
+                    file_count="single"
+                )
+
+                # Metadata inputs
+                title_input = gr.Textbox(
+                    label="Document Title",
+                    placeholder="Enter document title"
+                )
+                author_input = gr.Textbox(
+                    label="Author",
+                    placeholder="Enter author name"
+                )
+                tradition_input = gr.Textbox(
+                    label="Spiritual Tradition",
+                    placeholder="Enter tradition (e.g., Buddhist, Dzogchen)"
+                )
+
+                # Upload button
+                upload_btn = gr.Button("Upload Document", variant="primary")
+
+            with gr.Column():
+                # Upload status
+                upload_status = gr.Textbox(
+                    label="Upload Status",
+                    value="No document uploaded yet"
+                )
+
+        # Main User Interface
+        gr.Markdown("---")
+        gr.Markdown("# 💬 Spiritual Guidance")
+        gr.Markdown("Share your thoughts and receive personalized guidance")
 
         with gr.Row():
             with gr.Column(scale=2):
@@ -89,6 +158,14 @@ def create_interface():
             outputs=guidance_output
         )
 
+        # Document upload event
+        upload_btn.click(
+            fn=upload_document,
+            inputs=[file_input, title_input, author_input,
+                    tradition_input],
+            outputs=upload_status
+        )
+
     return demo
 
 
@@ -102,7 +179,7 @@ def main():
     # In production, you might want to use share=False and host locally
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7860,
+        server_port=7862,
         share=True,
         show_api=False,
         debug=True

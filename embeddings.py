@@ -27,8 +27,7 @@ class EmbeddingService:
             List of embedding values
 
         Raises:
-            requests.RequestException: If the API request fails
-            ValueError: If the response is invalid
+            Exception: If the API request fails or the response is invalid
         """
         response = self.client.embeddings.create(
             model=self.model,

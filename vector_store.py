@@ -1,7 +1,9 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Iterator, Tuple
 from pinecone import Pinecone, ServerlessSpec
 from config import Config
 from embeddings import EmbeddingService
+from document_processor import DocumentProcessor
+import itertools
 
 
 class VectorStore:
@@ -10,6 +12,7 @@ class VectorStore:
     def __init__(self):
         Config.validate()
         self.embedding_service = EmbeddingService()
+        self.document_processor = DocumentProcessor()
 
         # Initialize Pinecone
         self.pc = Pinecone(api_key=Config.PINECONE_API_KEY)
@@ -55,6 +58,76 @@ class VectorStore:
 
         # Upsert vectors
         self.index.upsert(vectors=vectors, namespace=namespace)
+
+    def _chunks(self, iterable: List, batch_size: int = 200) -> Iterator[Tuple]:
+        """
+        A helper function to break an iterable into chunks of size batch_size.
+
+        Args:
+            iterable: The iterable to chunk
+            batch_size: Size of each chunk
+
+        Yields:
+            Tuples of chunks
+        """
+        it = iter(iterable)
+        chunk = tuple(itertools.islice(it, batch_size))
+        while chunk:
+            yield chunk
+            chunk = tuple(itertools.islice(it, batch_size))
+
+    def upsert_document(self, file_path: str, filename: str,
+                        title: Optional[str] = None, author: Optional[str] = None,
+                        tradition: Optional[str] = None, namespace: str = "spiritual-library") -> Dict:
+        """
+        Process and upsert a document from a PDF file.
+
+        Args:
+            file_path: Path to the PDF file
+            filename: Original filename
+            title: Document title (optional)
+            author: Document author (optional)
+            tradition: Spiritual tradition (optional)
+            namespace: Namespace to store the vectors in
+
+        Returns:
+            Dictionary containing document information
+        """
+        # Process the document
+        result = self.document_processor.process_document(
+            file_path, filename, title=title, author=author, tradition=tradition
+        )
+
+        # Extract chunks and metadata
+        chunks = result["chunks"]
+        metadata = result["metadata"]
+
+        # Generate embeddings for chunks
+        embeddings = self.embedding_service.create_embeddings(chunks)
+
+        # Prepare vectors for upsert
+        vectors = []
+        for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+            vector = {
+                "id": f"{metadata['id']}:{i}",
+                "values": embedding,
+                "metadata": {
+                    "text": chunk,
+                    "document_id": metadata["id"],
+                    "title": metadata["title"],
+                    "author": metadata["author"],
+                    "tradition": metadata["tradition"],
+                    "filename": metadata["filename"]
+                }
+            }
+            vectors.append(vector)
+
+        # Upsert vectors to Pinecone in batches to avoid size limits
+        batch_size = 100  # Reduced batch size to stay under 2MB limit
+        for vectors_chunk in self._chunks(vectors, batch_size=batch_size):
+            self.index.upsert(vectors=list(vectors_chunk), namespace=namespace)
+
+        return result
 
     def _rerank_results(self, query: str, documents: List[str], top_n: int = 3) -> List[Dict[str, Any]]:
         """
