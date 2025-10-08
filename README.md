@@ -41,7 +41,7 @@ This project provides a foundation for a spiritual coaching application that ana
    NEBIUS_API_KEY=your_api_key_here
    PINECONE_API_KEY=your_pinecone_api_key_here
    ```
-5. Run the examples:
+5. Run the applications:
 
    ```bash
    # Test vector store
@@ -49,6 +49,9 @@ This project provides a foundation for a spiritual coaching application that ana
 
    # Test RAG service
    python rag.py
+
+   # Run the spiritual coach app
+   python app.py
    ```
 
 ## Components
