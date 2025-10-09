@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Link from "next/link";
 import { Providers } from "./components/Providers";
-import { AuthButton } from "./components/AuthButton";
+import { Navigation } from "./components/Navigation";
 import "./globals.css";
 
 const inter = Inter({
@@ -30,27 +29,7 @@ export default function RootLayout({
                 <div className="mr-8 flex items-center">
                   <span className="font-bold">Lumina AI</span>
                 </div>
-                <nav className="flex items-center gap-8">
-                  <Link
-                    href="/"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/features"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                  >
-                    Features
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                  >
-                    Contact
-                  </Link>
-                  <AuthButton />
-                </nav>
+                <Navigation />
               </div>
             </header>
             <main className="flex-1">{children}</main>
