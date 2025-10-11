@@ -3,3 +3,5 @@ pinecone[serverless]==3.1.0
 openai==1.35.10
 python-dotenv==1.0.1
 pymupdf4llm==0.13.0
+fastapi[standard]
+uvicorn

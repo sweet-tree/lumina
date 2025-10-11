@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional, Iterator, Tuple
 from pinecone import Pinecone, ServerlessSpec
-from config import Config
+from backend.config import Config
 from embeddings import EmbeddingService
 from document_processor import DocumentProcessor
 import itertools

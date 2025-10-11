@@ -1,7 +1,7 @@
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from typing import List
-from config import Config
+from backend.config import Config
 
 
 class ChatService:

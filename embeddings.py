@@ -1,6 +1,6 @@
 from openai import OpenAI
 from typing import List
-from config import Config
+from backend.config import Config
 
 
 class EmbeddingService:
