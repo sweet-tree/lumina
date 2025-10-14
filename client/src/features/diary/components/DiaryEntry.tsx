@@ -2,24 +2,68 @@
 
 import { useState, useEffect } from "react";
 import { DateTime } from "luxon";
-import { sendMessage } from "../actions";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { sendMessage, getEntryForDate } from "../actions";
 import { LoadingState } from "./LoadingState";
 import { ResponseDisplay } from "./ResponseDisplay";
 
 export function DiaryEntry() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get date from URL or default to today
+  const dateParam = searchParams.get("date");
+  const [currentDate, setCurrentDate] = useState<DateTime>(
+    dateParam ? DateTime.fromISO(dateParam) : DateTime.now()
+  );
+
   const [entry, setEntry] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
-  const [currentDateTime, setCurrentDateTime] = useState("");
-
-  // Set date/time on mount
+  const [existingEntry, setExistingEntry] = useState<{
+    content: string;
+    aiResponse: string | null;
+  } | null>(null);
+  // Fetch entry when date changes
   useEffect(() => {
-    setCurrentDateTime(DateTime.now().toFormat("MMMM d, yyyy · h:mm a"));
-  }, []);
+    const fetchEntry = async () => {
+      setIsFetching(true);
+      const dateStr = currentDate.toISODate();
+      const entry = await getEntryForDate(dateStr!);
 
-  // Auto-save to localStorage
+      if (entry) {
+        setExistingEntry(entry);
+        setEntry(entry.content);
+        setResponse(entry.aiResponse);
+      } else {
+        setExistingEntry(null);
+        setEntry("");
+        setResponse(null);
+      }
+      setIsFetching(false);
+    };
+
+    fetchEntry();
+  }, [currentDate]);
+
+  // Update URL when date changes
   useEffect(() => {
-    if (!response) {
+    const dateStr = currentDate.toISODate();
+    const isToday = currentDate.hasSame(DateTime.now(), "day");
+
+    if (isToday) {
+      router.push("/dashboard/diary");
+    } else {
+      router.push(`/dashboard/diary?date=${dateStr}`);
+    }
+  }, [currentDate, router]);
+
+  // Auto-save draft only for today
+  useEffect(() => {
+    const isToday = currentDate.hasSame(DateTime.now(), "day");
+    if (!response && isToday) {
       const timer = setTimeout(() => {
         if (entry) {
           localStorage.setItem("diary_draft", entry);
@@ -27,15 +71,18 @@ export function DiaryEntry() {
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [entry, response]);
+  }, [entry, response, currentDate]);
 
-  // Load draft on mount
+  // Load draft on mount (only for today)
   useEffect(() => {
-    const draft = localStorage.getItem("diary_draft");
-    if (draft) {
-      setEntry(draft);
+    const isToday = currentDate.hasSame(DateTime.now(), "day");
+    if (isToday && !existingEntry) {
+      const draft = localStorage.getItem("diary_draft");
+      if (draft) {
+        setEntry(draft);
+      }
     }
-  }, []);
+  }, [currentDate, existingEntry]);
 
   const handleSubmit = async () => {
     if (!entry.trim()) return;
@@ -43,9 +90,9 @@ export function DiaryEntry() {
     setIsLoading(true);
 
     try {
-      // Artificial minimum delay for UX
       const startTime = Date.now();
-      const result = await sendMessage(entry);
+      const dateStr = currentDate.toISODate();
+      const result = await sendMessage(entry, dateStr!);
       const elapsed = Date.now() - startTime;
       const remainingDelay = Math.max(0, 2000 - elapsed);
 
@@ -53,6 +100,7 @@ export function DiaryEntry() {
 
       if (result.success && result.response) {
         setResponse(result.response);
+        setExistingEntry({ content: entry, aiResponse: result.response });
         localStorage.removeItem("diary_draft");
       } else {
         alert(result.error || "Failed to get response");
@@ -68,14 +116,74 @@ export function DiaryEntry() {
   const handleNewEntry = () => {
     setEntry("");
     setResponse(null);
-    setCurrentDateTime(DateTime.now().toFormat("MMMM d, yyyy · h:mm a"));
+    setExistingEntry(null);
   };
+
+  const goToPreviousDay = () => {
+    setCurrentDate(currentDate.minus({ days: 1 }));
+  };
+
+  const goToNextDay = () => {
+    const tomorrow = DateTime.now().plus({ days: 1 }).startOf("day");
+    const nextDate = currentDate.plus({ days: 1 });
+
+    // Don't go beyond tomorrow
+    if (nextDate <= tomorrow) {
+      setCurrentDate(nextDate);
+    }
+  };
+
+  const goToToday = () => {
+    setCurrentDate(DateTime.now());
+  };
+
+  const isToday = currentDate.hasSame(DateTime.now(), "day");
+  const canGoNext = currentDate < DateTime.now().startOf("day");
+
+  if (isFetching) {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <div className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl">
-      {/* Date/Time Header */}
-      <div className="mb-6">
-        <p className="text-sm text-muted-foreground">{currentDateTime}</p>
+      {/* Date Navigation */}
+      <div className="mb-6 flex items-center justify-between">
+        <button
+          onClick={goToPreviousDay}
+          className="rounded-lg p-2 transition-colors hover:bg-accent/10"
+          aria-label="Previous day"
+        >
+          <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+        </button>
+
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-sm text-muted-foreground">
+            {currentDate.toFormat("MMMM d, yyyy")}
+          </p>
+          {!isToday && (
+            <button
+              onClick={goToToday}
+              className="text-xs text-accent hover:underline"
+            >
+              Go to Today
+            </button>
+          )}
+        </div>
+
+        <button
+          onClick={goToNextDay}
+          disabled={!canGoNext}
+          className="rounded-lg p-2 transition-colors hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Next day"
+        >
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </button>
       </div>
 
       {/* Entry Textarea */}
@@ -83,14 +191,20 @@ export function DiaryEntry() {
         <textarea
           value={entry}
           onChange={(e) => setEntry(e.target.value)}
-          placeholder="How are you feeling right now?"
-          disabled={isLoading || response !== null}
+          placeholder={
+            existingEntry
+              ? "Your entry..."
+              : isToday
+              ? "How are you feeling right now?"
+              : `Write an entry for ${currentDate.toFormat("MMMM d")}...`
+          }
+          disabled={isLoading || (!!response && !!existingEntry)}
           className="min-h-[300px] w-full resize-none rounded-lg border-0 bg-card p-6 font-serif text-lg leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 disabled:opacity-50"
-          autoFocus
+          autoFocus={!existingEntry}
         />
       </div>
 
-      {/* Reflect Button */}
+      {/* Action Buttons */}
       {!response && (
         <div className="flex justify-center">
           <button

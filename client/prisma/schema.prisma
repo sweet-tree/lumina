@@ -72,8 +72,10 @@ model DiaryEntry {
   aiResponse      String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  entryDate       DateTime @default(now()) @db.Date  // Add default
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([userId])
+  @@index([userId, entryDate])
 }
