@@ -10,7 +10,6 @@ from typing import Dict, List, Optional
 from pathlib import Path
 from datetime import datetime
 import pymupdf4llm
-from backend.services.vector_store_service import VectorStore
 
 
 class DocumentProcessor:
