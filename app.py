@@ -7,6 +7,7 @@ import gradio as gr
 from gradio.themes import Soft
 from backend.services.rag_service import RAGService
 from backend.services.vector_store_service import VectorStore
+from backend.services.document_processor_service import DocumentProcessor
 import os
 
 

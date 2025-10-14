@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional, Iterator, Tuple
 from pinecone import Pinecone, ServerlessSpec
 from ..config import Config
 from .embedding_service import EmbeddingService
-from ..document_processor import DocumentProcessor
+from .document_processor_service import DocumentProcessor
 import itertools
 
 

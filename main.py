@@ -5,6 +5,7 @@ Demonstrates chat completions and embedding generation.
 
 from backend.services.chat_service import ChatService
 from backend.services.embedding_service import EmbeddingService
+from backend.services.document_processor_service import DocumentProcessor
 
 
 def main():

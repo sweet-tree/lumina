@@ -6,6 +6,7 @@ Combines retrieved spiritual teachings with chat generation to provide personali
 from typing import List, Dict, Any
 from backend.services.chat_service import ChatService
 from backend.services.vector_store_service import VectorStore
+from backend.services.document_processor_service import DocumentProcessor
 
 
 class RAGService:
