@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional
 
 # Create FastAPI application instance
 app = FastAPI(
@@ -16,6 +18,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request model for chat endpoint
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+# Response model for chat endpoint
+
+
+class ChatResponse(BaseModel):
+    success: bool
+    response: Optional[str] = None
+    error: Optional[str] = None
 
 # Health check endpoint
 
@@ -44,3 +60,30 @@ async def root():
         "documentation": "/docs",
         "health": "/health"
     }
+
+
+# Chat endpoint
+@app.post("/chat", response_model=ChatResponse)
+async def chat_endpoint(request: ChatRequest):
+    """
+    Chat endpoint to process user messages and return AI responses.
+    """
+    try:
+        # Import ChatService here to avoid circular imports
+        from chat import ChatService
+
+        # Initialize chat service
+        chat_service = ChatService()
+
+        # Generate response using the chat service
+        response = chat_service.generate(request.message)
+
+        return ChatResponse(
+            success=True,
+            response=response
+        )
+    except Exception as e:
+        return ChatResponse(
+            success=False,
+            error=str(e)
+        )
