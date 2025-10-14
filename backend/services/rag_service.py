@@ -4,8 +4,8 @@ Combines retrieved spiritual teachings with chat generation to provide personali
 """
 
 from typing import List, Dict, Any
-from backend.services.chat_service import ChatService
-from backend.services.vector_store_service import VectorStore
+from .chat_service import ChatService
+from .vector_store_service import VectorStore
 
 
 class RAGService:
@@ -68,34 +68,3 @@ Response:"""
             full_prompt, max_tokens, temperature)
 
         return response
-
-
-def main():
-    """Test the RAG service with sample queries."""
-    print("Initializing RAG Service...")
-    rag_service = RAGService()
-
-    # Test queries simulating diary entries or questions
-    test_queries = [
-        "I'm feeling anxious about the future and can't stop worrying about what might happen",
-        "I want to be more present in my daily life but my mind keeps wandering to the past and future",
-        "I'm struggling with attachment to outcomes in my work and relationships",
-        "I find it hard to work with difficult emotions like anger and sadness when they arise",
-        "I'm on a spiritual path and want to understand what enlightenment really means"
-    ]
-
-    print("\nTesting RAG Service with sample queries:")
-    print("-" * 50)
-
-    for query in test_queries:
-        print(f"\nQuery: {query}")
-        print("Generating response...")
-        response = rag_service.generate_response(query)
-        print(f"Response: {response}")
-        print("\n" + "="*80)
-
-    print("\nRAG Service test completed successfully!")
-
-
-if __name__ == "__main__":
-    main()

@@ -3,8 +3,8 @@ Minimal RAG project using Qwen models on Nebius.
 Demonstrates chat completions and embedding generation.
 """
 
-from chat import ChatService
-from embeddings import EmbeddingService
+from backend.services.chat_service import ChatService
+from backend.services.embedding_service import EmbeddingService
 
 
 def main():

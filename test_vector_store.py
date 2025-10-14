@@ -4,7 +4,7 @@ Demonstrates storing and retrieving spiritual texts using Pinecone.
 """
 
 import json
-from vector_store import VectorStore
+from backend.services.vector_store_service import VectorStore
 
 
 def main():

@@ -5,8 +5,8 @@ A user-friendly interface for the spiritual coach RAG system.
 
 import gradio as gr
 from gradio.themes import Soft
-from rag import RAGService
-from vector_store import VectorStore
+from backend.services.rag_service import RAGService
+from backend.services.vector_store_service import VectorStore
 import os
 
 
