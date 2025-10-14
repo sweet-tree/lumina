@@ -1,21 +1,34 @@
 "use server";
 
-// Import will be added later when we connect to the real chat service
-// import { ChatService } from "@/../chat";
-
 export async function sendMessage(message: string) {
-  // For now, return a mock response
-  // In the future, this will call the actual ChatService
+  // Log message receipt
   console.log("Message received in server action:", message);
 
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    // Call the backend chat API
+    const response = await fetch("http://localhost:8000/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: message }),
+    });
 
-  return {
-    success: true,
-    response:
-      'This is a mock response to your message: "' +
-      message +
-      "\". In the next step, we'll connect this to the actual ChatService.",
-  };
+    // Parse the response
+    const data = await response.json();
+
+    // Return the response in the expected format
+    return {
+      success: data.success,
+      response: data.response,
+      error: data.error,
+    };
+  } catch (error) {
+    console.error("Error calling chat API:", error);
+    return {
+      success: false,
+      response: null,
+      error: "Failed to connect to the chat service",
+    };
+  }
 }

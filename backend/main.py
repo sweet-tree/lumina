@@ -1,3 +1,4 @@
+from rag import RAGService
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -66,17 +67,14 @@ async def root():
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
     """
-    Chat endpoint to process user messages and return AI responses.
+    Chat endpoint to process user messages and return AI responses using RAG.
     """
     try:
-        # Import ChatService here to avoid circular imports
-        from chat import ChatService
+        # Initialize RAG service
+        rag_service = RAGService()
 
-        # Initialize chat service
-        chat_service = ChatService()
-
-        # Generate response using the chat service
-        response = chat_service.generate(request.message)
+        # Generate response using RAG service
+        response = rag_service.generate_response(request.message)
 
         return ChatResponse(
             success=True,
