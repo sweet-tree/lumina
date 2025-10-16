@@ -52,7 +52,7 @@ export async function sendMessage(message: string, entryDate?: string) {
 
     // 5. Save to database if AI response was successful
     if (data.success && data.response) {
-      await prisma.diaryEntry.create({
+      const createdEntry = await prisma.diaryEntry.create({
         data: {
           userId: user.id,
           content: message,
@@ -62,6 +62,18 @@ export async function sendMessage(message: string, entryDate?: string) {
         },
       });
       console.log("Entry saved for date:", dateForEntry.toISODate());
+
+      // Return the created entry so we can add it to the UI
+      return {
+        success: true,
+        response: data.response,
+        entry: {
+          id: createdEntry.id,
+          content: createdEntry.content,
+          aiResponse: createdEntry.aiResponse,
+          createdAt: createdEntry.createdAt.toISOString(),
+        },
+      };
     }
 
     return {
@@ -79,12 +91,12 @@ export async function sendMessage(message: string, entryDate?: string) {
   }
 }
 
-// NEW: Fetch entry for specific date
-export async function getEntryForDate(date: string) {
+// UPDATED: Fetch all entries for specific date (returns array)
+export async function getEntriesForDate(date: string) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return null;
+      return [];
     }
 
     const user = await prisma.user.findUnique({
@@ -92,15 +104,15 @@ export async function getEntryForDate(date: string) {
     });
 
     if (!user) {
-      return null;
+      return [];
     }
 
     // Parse date and get start/end of day
     const targetDate = DateTime.fromISO(date).startOf("day");
     const nextDay = targetDate.plus({ days: 1 });
 
-    // Fetch entry for this specific date
-    const entry = await prisma.diaryEntry.findFirst({
+    // Fetch ALL entries for this specific date
+    const entries = await prisma.diaryEntry.findMany({
       where: {
         userId: user.id,
         entryDate: {
@@ -109,13 +121,13 @@ export async function getEntryForDate(date: string) {
         },
       },
       orderBy: {
-        createdAt: "desc", // Get most recent if multiple entries
+        createdAt: "asc", // Chronological order (oldest first)
       },
     });
 
-    return entry;
+    return entries;
   } catch (error) {
-    console.error("Error fetching entry:", error);
-    return null;
+    console.error("Error fetching entries:", error);
+    return [];
   }
 }
