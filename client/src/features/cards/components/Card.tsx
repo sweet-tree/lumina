@@ -195,16 +195,15 @@ export function Card({ card, onComplete, isLoading, reflection }: CardProps) {
 
         {/* Back of Card - Reflection */}
         <div
-          className={`w-full rounded-2xl border-2 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 shadow-lg overflow-hidden absolute inset-0 ${
-            !reflection ? "invisible" : "visible"
-          }`}
+          className={`w-full rounded-2xl border-2 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 shadow-lg overflow-hidden absolute inset-0 `}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
           }}
         >
-          {reflection && (
+          {/* Always show content on back */}
+          {reflection ? (
             <>
               {/* Header */}
               <div className="p-6 pb-4">
@@ -237,6 +236,14 @@ export function Card({ card, onComplete, isLoading, reflection }: CardProps) {
                 </button>
               </div>
             </>
+          ) : (
+            // Loading state
+            <div className="flex flex-col items-center justify-center h-full p-6">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
+              <p className="text-purple-700 dark:text-purple-400 font-serif">
+                Reflecting on your response...
+              </p>
+            </div>
           )}
         </div>
       </div>
