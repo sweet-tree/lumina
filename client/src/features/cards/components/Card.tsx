@@ -15,7 +15,7 @@ type CardData = {
   type: "body" | "energy" | "mind" | "integration";
   state: string;
   questions: Question[];
-  guidingPrompt: string; // Main prompt for the card
+  guidingPrompt: string;
   icon: string;
   color: string;
 };
@@ -70,33 +70,39 @@ const getTypeStyles = (type: string) => {
 
 export function Card({ card, onComplete, isLoading, reflection }: CardProps) {
   const [answer, setAnswer] = useState("");
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const styles = getTypeStyles(card.type);
 
   const handleSubmit = () => {
     if (!answer.trim()) return;
+    setHasSubmitted(true); // Trigger flip immediately
     onComplete(answer, card.id);
-    setIsFlipped(true);
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto perspective-1000">
-      {/* Card Container with 3D flip */}
+    <div
+      className="relative w-full max-w-md mx-auto h-auto"
+      style={{ perspective: "1000px" }}
+    >
+      {/* Card Container - rotates as one piece */}
       <div
-        className={`relative w-full transition-transform duration-500 ${
-          isFlipped ? "[transform:rotateY(180deg)]" : ""
-        }`}
-        style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
+        className="relative w-full h-auto transition-transform duration-700 ease-in-out"
+        style={{
+          transformStyle: "preserve-3d",
+          transform:
+            reflection || hasSubmitted ? "rotateY(180deg)" : "rotateY(0deg)",
+        }}
       >
         {/* Front of Card - Questions */}
         <div
-          className={`${
-            isFlipped ? "hidden" : "block"
-          } w-full rounded-2xl border-2 ${styles.border} ${
+          className={`w-full rounded-2xl border-2 ${styles.border} ${
             styles.bg
-          } shadow-lg overflow-hidden backface-hidden`}
-          style={{ backfaceVisibility: "hidden" }}
+          } shadow-lg overflow-hidden ${reflection ? "invisible" : "visible"}`}
+          style={{
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+          }}
         >
           {/* Header */}
           <div className="p-6 pb-4">
@@ -188,45 +194,51 @@ export function Card({ card, onComplete, isLoading, reflection }: CardProps) {
         </div>
 
         {/* Back of Card - Reflection */}
-        {reflection && (
-          <div
-            className={`${
-              !isFlipped ? "hidden" : "block"
-            } w-full rounded-2xl border-2 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 shadow-lg overflow-hidden backface-hidden rotate-y-180`}
-            style={{ backfaceVisibility: "hidden" }}
-          >
-            {/* Header */}
-            <div className="p-6 pb-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 p-3 rounded-xl text-2xl flex items-center justify-center">
-                  ✨
+        <div
+          className={`w-full rounded-2xl border-2 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 shadow-lg overflow-hidden absolute inset-0 ${
+            !reflection ? "invisible" : "visible"
+          }`}
+          style={{
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+          }}
+        >
+          {reflection && (
+            <>
+              {/* Header */}
+              <div className="p-6 pb-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 p-3 rounded-xl text-2xl flex items-center justify-center">
+                    ✨
+                  </div>
+                  <h2 className="text-xl font-semibold text-purple-700 dark:text-purple-400">
+                    Reflection
+                  </h2>
                 </div>
-                <h2 className="text-xl font-semibold text-purple-700 dark:text-purple-400">
-                  Reflection
-                </h2>
               </div>
-            </div>
 
-            {/* Reflection Content */}
-            <div className="px-6 pb-6">
-              <div className="p-5 rounded-xl bg-background/50 backdrop-blur-sm border border-border">
-                <p className="text-base font-serif leading-relaxed text-foreground/90 whitespace-pre-wrap">
-                  {reflection}
-                </p>
+              {/* Reflection Content */}
+              <div className="px-6 pb-6">
+                <div className="p-5 rounded-xl bg-background/50 backdrop-blur-sm border border-border">
+                  <p className="text-base font-serif leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                    {reflection}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Action Button */}
-            <div className="p-6 pt-0">
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full py-3 px-6 rounded-xl bg-purple-600 dark:bg-purple-700 text-white font-medium transition-all hover:bg-purple-700 dark:hover:bg-purple-600 active:scale-[0.98] shadow-sm"
-              >
-                New Check-In
-              </button>
-            </div>
-          </div>
-        )}
+              {/* Action Button */}
+              <div className="p-6 pt-0">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full py-3 px-6 rounded-xl bg-purple-600 dark:bg-purple-700 text-white font-medium transition-all hover:bg-purple-700 dark:hover:bg-purple-600 active:scale-[0.98] shadow-sm"
+                >
+                  New Check-In
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

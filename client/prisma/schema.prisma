@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -14,7 +11,6 @@ datasource db {
   url      = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-
 
 // NextAuth models
 model Account {
@@ -53,6 +49,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   diaryEntries  DiaryEntry[]
+  cardSessions  CardSession[]
   createdAt     DateTime  @default(now())
 }
 
@@ -64,7 +61,7 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Your app models
+// Legacy diary model (keep for now)
 model DiaryEntry {
   id              String   @id @default(cuid())
   userId          String
@@ -72,10 +69,67 @@ model DiaryEntry {
   aiResponse      String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  entryDate       DateTime @default(now()) @db.Date  // Add default
+  entryDate       DateTime @default(now()) @db.Date
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([userId])
   @@index([userId, entryDate])
+}
+
+// New card-based system
+model Card {
+  id                String   @id @default(cuid())
+  type              String   // body, energy, mind, integration
+  state             String   // tension, flow, clarity, depletion, etc.
+  title             String
+  guidingPrompt     String   @db.Text  // Main prompt for the card
+  questions         Json     // Array of guiding questions (optional hints)
+  reflectionPrompt  String   @db.Text  // Prompt for AI mini-reflection
+  icon              String
+  color             String
+  deck              String   @default("core")
+  order             Int
+  
+  // Leela-inspired relationships
+  ascendingStates   String[]  // States this naturally leads to (ladders)
+  descendingStates  String[]  // States this can decline to (snakes)
+  breaksPatternOf   String[]  // States this interrupts/transforms
+  
+  sessions          CardSession[]
+  createdAt         DateTime @default(now())
+  
+  @@index([deck])
+  @@index([state])
+}
+
+model CardSession {
+  id              String   @id @default(cuid())
+  userId          String
+  cardId          String
+  state           String   // State user was in (from card)
+  timestamp       DateTime @default(now())
+  answer          String   @db.Text  // Single answer (hybrid input)
+  miniReflection  String?  @db.Text  // AI-generated reflection
+  
+  user  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card  Card @relation(fields: [cardId], references: [id])
+  
+  @@index([userId, timestamp])
+  @@index([userId, state])
+}
+
+// Future: Daily synthesis
+model DailySynthesis {
+  id                String   @id @default(cuid())
+  userId            String
+  date              DateTime @db.Date
+  cardSessionIds    String[] // Array of session IDs from today
+  synthesis         String   @db.Text  // AI-generated daily synthesis
+  journeyPattern    String?  // e.g., "descending", "ascending", "cycling"
+  stateTransitions  Json?    // Array of state transitions
+  createdAt         DateTime @default(now())
+  
+  @@unique([userId, date])
+  @@index([userId, date])
 }
