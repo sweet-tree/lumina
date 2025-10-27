@@ -3,7 +3,8 @@
 - [ ] 1. Set up LangGraph dependencies and state definition
 
   - Add langgraph, langchain-core, and tenacity to requirements.txt
-  - Create LuminaState TypedDict in langgraph_service.py with user_input, depth_level, rag_context, and response fields
+  - Create LuminaState TypedDict in langgraph_service.py with user_input, depth_level, rag_contexts (list with reducer), and response fields
+  - Use Annotated[list[dict], operator.add] for rag_contexts to support future parallel retrieval from multiple sources
   - Verify type safety with mypy or similar type checker
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
@@ -20,8 +21,9 @@
 
   - Create retrieve_context function in langgraph_service.py
   - Integrate existing VectorStoreService to search "spiritual-library" namespace
-  - Extract top 3 text passages from search results
-  - Implement error handling to set empty rag_context on failure
+  - Extract top 3 text passages and structure as dict with source and passages keys
+  - Return as list of dicts to support future multi-source retrieval
+  - Implement error handling to set empty rag_contexts list on failure
   - Add logging for number of passages retrieved
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 10.3_
 

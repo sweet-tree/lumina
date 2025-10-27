@@ -25,7 +25,7 @@ This document specifies the requirements for a LangGraph-based two-agent evaluat
 
 #### Acceptance Criteria
 
-1. THE Lumina System SHALL define a state structure containing user_input, depth_level, rag_context, and response fields
+1. THE Lumina System SHALL define a state structure containing user_input, depth_level, rag_contexts, and response fields
 2. THE Lumina System SHALL implement the state using TypedDict for type safety
 3. WHEN any workflow node executes, THE Lumina System SHALL provide read access to all state fields
 4. WHEN any workflow node completes, THE Lumina System SHALL allow write access to update state fields
@@ -52,9 +52,9 @@ This document specifies the requirements for a LangGraph-based two-agent evaluat
 
 1. WHEN the RAG Context Node executes, THE Lumina System SHALL query the Vector Store Service using the Check-In Input as the search query
 2. THE Lumina System SHALL retrieve between 3 and 5 relevant text passages from the vector store
-3. THE Lumina System SHALL store retrieved passages in the rag_context state field
+3. THE Lumina System SHALL store retrieved passages in the rag_contexts state field
 4. THE Lumina System SHALL integrate with the existing vector_store_service.py module
-5. IF the vector store query fails, THEN THE Lumina System SHALL log the error and continue with empty rag_context
+5. IF the vector store query fails, THEN THE Lumina System SHALL log the error and continue with empty rag_contexts
 
 ### Requirement 4: Depth-Based Response Routing
 
@@ -87,7 +87,7 @@ This document specifies the requirements for a LangGraph-based two-agent evaluat
 #### Acceptance Criteria
 
 1. WHEN the medium response node executes, THE Lumina System SHALL generate a response containing both wisdom and a question
-2. THE Lumina System SHALL incorporate passages from rag_context into the response
+2. THE Lumina System SHALL incorporate passages from rag_contexts into the response
 3. THE Lumina System SHALL limit the response to 2-3 sentences
 4. THE Lumina System SHALL use Plant Teacher Voice in the response
 5. THE Lumina System SHALL balance reflection with continued inquiry
@@ -99,7 +99,7 @@ This document specifies the requirements for a LangGraph-based two-agent evaluat
 #### Acceptance Criteria
 
 1. WHEN the deep response node executes, THE Lumina System SHALL generate a wisdom reflection without questions
-2. THE Lumina System SHALL heavily incorporate passages from rag_context into the response
+2. THE Lumina System SHALL heavily incorporate passages from rag_contexts into the response
 3. THE Lumina System SHALL limit the response to 2-3 sentences
 4. THE Lumina System SHALL use Plant Teacher Voice in the response
 5. THE Lumina System SHALL make the reflection specific to the user's described experience

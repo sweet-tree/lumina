@@ -69,17 +69,21 @@ Edges:
 **File**: `backend/services/langgraph_service.py`
 
 ```python
-from typing import TypedDict, List, Literal
+from typing import TypedDict, Literal
+from typing_extensions import Annotated
+from operator import add
 
 class LuminaState(TypedDict):
     """State object that flows through the LangGraph workflow."""
     user_input: str
     depth_level: Literal["shallow", "medium", "deep"]
-    rag_context: List[str]
+    rag_contexts: Annotated[list[dict], add]
     response: str
 ```
 
 **Purpose**: Type-safe container for workflow data that all nodes can read/write.
+
+**Note on `rag_contexts`**: Uses a list of dicts (rather than list of strings) with a reducer annotation (`operator.add`) to support future parallel retrieval from multiple spiritual knowledge sources (Buddhist, Vedic, shamanic). For MVP, only one source is used, but this structure supports expansion without breaking changes. Each dict contains `{"source": str, "passages": list[str]}`.
 
 ### 2. Depth Evaluator Agent
 
@@ -147,7 +151,7 @@ def retrieve_context(state: LuminaState) -> LuminaState:
         state: Current workflow state with user_input
 
     Returns:
-        Updated state with rag_context populated
+        Updated state with rag_contexts populated
     """
 ```
 
@@ -157,8 +161,8 @@ def retrieve_context(state: LuminaState) -> LuminaState:
 - Searches "spiritual-library" namespace (contains Power of Now)
 - Query: Uses user_input directly
 - Retrieves top 3 passages (already reranked by VectorStoreService)
-- Extracts text from results: `[result["text"] for result in results]`
-- Error handling: If search fails, sets rag_context to empty list and logs error
+- Structures result as dict with source and passages keys
+- Error handling: If search fails, sets rag_contexts to empty list and logs error
 
 **Integration**:
 
@@ -169,8 +173,13 @@ results = vector_store.search(
     top_k=10,  # Retrieves 10 candidates, returns top 3 reranked
     namespace="spiritual-library"
 )
-state["rag_context"] = [r["text"] for r in results]
+state["rag_contexts"] = [{
+    "source": "spiritual-library",
+    "passages": [r["text"] for r in results]
+}]
 ```
+
+**Future Enhancement**: This node is designed to support parallel retrieval from multiple knowledge sources. The current implementation retrieves from a single source but returns data in a structure that supports multiple sources. When parallel retrieval is implemented, separate nodes (e.g., `retrieve_buddhist`, `retrieve_vedic`, `retrieve_shamanic`) can each append to `rag_contexts`, and the reducer will automatically merge them without requiring state schema changes.
 
 ### 4. Conditional Router
 
@@ -306,8 +315,7 @@ The user gave a medium-depth check-in: "{user_input}"
 They're noticing body sensations but haven't gone deeper into context or breath.
 
 Relevant spiritual wisdom:
-{rag_context[0]}
-{rag_context[1]}
+{format_passages(rag_contexts)}
 
 Give a wisdom reflection that speaks to their sensation, then ask a provocative question to guide them deeper.
 
@@ -316,6 +324,8 @@ Give a wisdom reflection that speaks to their sensation, then ask a provocative 
 Example structure:
 "[Wisdom about their sensation]. [Provocative question]."
 ```
+
+**Note**: `format_passages()` extracts passages from all sources in `rag_contexts` for use in the prompt.
 
 **Parameters**:
 
@@ -349,15 +359,15 @@ The user gave a deep check-in with body awareness, breath, and context: "{user_i
 They're already looking. Give them pure spiritual wisdom that speaks directly to their specific experience.
 
 Relevant spiritual wisdom:
-{rag_context[0]}
-{rag_context[1]}
-{rag_context[2]}
+{format_passages(rag_contexts)}
 
 2-3 sentences. Direct. Mystical. Specific to their words. No questions - they're already in inquiry.
 
 Example:
 "The breath knows what the mind refuses to see. You're bracing against what hasn't happened yet. The body is asking you to arrive here, now."
 ```
+
+**Note**: `format_passages()` extracts passages from all sources in `rag_contexts` for use in the prompt.
 
 **Parameters**:
 
@@ -480,10 +490,10 @@ except Exception as e:
 
 ```python
 {
-    "user_input": str,           # Original user check-in text
-    "depth_level": str,          # "shallow" | "medium" | "deep"
-    "rag_context": List[str],    # 3-5 spiritual wisdom passages
-    "response": str              # Final Lumina response
+    "user_input": str,                    # Original user check-in text
+    "depth_level": str,                   # "shallow" | "medium" | "deep"
+    "rag_contexts": list[dict],           # List of {source: str, passages: list[str]}
+    "response": str                       # Final Lumina response
 }
 ```
 
@@ -528,15 +538,18 @@ def call_llm(prompt: str) -> str:
 
 ### Vector Store Failures
 
-**Strategy**: Continue workflow with empty rag_context
+**Strategy**: Continue workflow with empty rag_contexts
 
 ```python
 try:
     results = vector_store.search(query, top_k=10)
-    rag_context = [r["text"] for r in results]
+    rag_contexts = [{
+        "source": "spiritual-library",
+        "passages": [r["text"] for r in results]
+    }]
 except Exception as e:
     logger.error(f"Vector store search failed: {e}")
-    rag_context = []
+    rag_contexts = []
 ```
 
 **Impact**: Response nodes will generate without RAG context (still valid, just less grounded in teachings)
@@ -688,11 +701,12 @@ INFO - Workflow complete | Total time: 1.55s | Depth: deep
 ### New Dependencies to Add
 
 ```
-langgraph==0.2.0
-langchain==0.3.0
-langchain-core==0.3.0
-tenacity==8.2.3
+langgraph>=0.2.0
+langchain-core>=0.3.0
+tenacity>=8.2.3
 ```
+
+**Note**: We only need `langchain-core` (not the full `langchain` package) since LangGraph depends on it and we're using our existing ChatService for LLM calls.
 
 ### Existing Dependencies (Reuse)
 
