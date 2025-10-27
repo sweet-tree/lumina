@@ -63,7 +63,7 @@
   - Log all errors and fallback usage at WARNING/ERROR levels
   - _Requirements: 9.4, 10.1_
 
-- [ ] 8. Create FastAPI checkin endpoint
+- [x] 8. Create FastAPI checkin endpoint
 
   - Create backend/routes/checkin.py with CheckinRequest and CheckinResponse models
   - Implement POST /api/checkin endpoint that calls LangGraphService.process_checkin
