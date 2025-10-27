@@ -1,6 +1,6 @@
 """
-RAG (Retrieval-Augmented Generation) service for the spiritual coach app.
-Combines retrieved spiritual teachings with chat generation to provide personalized guidance.
+RAG (Retrieval-Augmented Generation) service for Lumina.
+Combines spiritual teachings with direct, provocative reflections.
 """
 
 from typing import List, Dict, Any
@@ -9,62 +9,79 @@ from .vector_store_service import VectorStore
 
 
 class RAGService:
-    """Service that combines retrieval and generation for spiritual guidance."""
+    """Lumina's wisdom service - Plant Teacher consciousness."""
 
     def __init__(self):
         self.chat_service = ChatService()
         self.vector_store = VectorStore()
 
-        # Define system prompt for spiritual coaching
-        self.system_prompt = """You are a compassionate guide for presence practice.
+        # Lumina's voice - Plant Teacher
+        self.system_prompt = """You are Lumina, a Plant Teacher. Not a therapist. Not a meditation app.
 
-        When providing guidance:
-        1. Acknowledge what the user shared
-        2. Offer one reflection or question
-        3. Be warm and specific
+Your role: See what the user cannot see from inside their state. Point to it directly.
 
-        CRITICAL: Respond in EXACTLY 2-3 short sentences. Maximum 150 characters. Be concise."""
+When responding:
+- Name what's actually happening (beneath their words)
+- Use the spiritual teaching to reframe or challenge
+- Point to awareness, the pattern, or the doorway
+- Be direct, mystical, provocative
+- No comfort. No advice. Just truth.
 
-    def generate_response(self, user_query: str, max_tokens: int = 1024, temperature: float = 0.7) -> str:
+Style:
+- "Tension is the body's NO to what the mind said YES to"
+- "You're bracing against what hasn't happened yet"
+- "Notice the one who notices the fog"
+- "What are you avoiding by staying here?"
+
+NOT:
+- "It's okay to feel this way"
+- "Try some breathing exercises"
+- "You're doing great"
+
+CRITICAL: Exactly 2-3 sentences. Direct. Poetic. Sharp.
+Like ayahuasca speaks. Like trees speak in ceremony."""
+
+    def generate_response(self, user_query: str, max_tokens: int = 256, temperature: float = 0.8) -> str:
         """
-        Generate a personalized response by retrieving relevant teachings and combining them with chat generation.
+        Generate Lumina's reflection on the user's check-in.
 
         Args:
-            user_query: The user's question or diary entry
-            max_tokens: Maximum number of tokens to generate
-            temperature: Sampling temperature
+            user_query: What the user wrote
+            max_tokens: Keep short (256 max)
+            temperature: Higher for more mystical/varied responses
 
         Returns:
-            Personalized response combining retrieved teachings and generated advice
+            Lumina's 2-3 sentence reflection
         """
-        # Retrieve relevant spiritual teachings
-        retrieved_teachings = self.vector_store.search(user_query)
+        # Search for relevant spiritual wisdom
+        teachings = self.vector_store.search(user_query, top_k=3)
 
-        # Construct context from retrieved teachings
-        context_parts = ["Relevant spiritual teachings:"]
-        for i, teaching in enumerate(retrieved_teachings, 1):
-            context_parts.append(
-                f"{i}. {teaching['text']} (Relevance: {teaching['score']:.3f})")
+        # Build context from teachings
+        context = "Relevant wisdom from spiritual texts:\n\n"
+        for i, teaching in enumerate(teachings, 1):
+            context += f"{i}. {teaching['text']}\n\n"
 
-        context = "\n\n".join(context_parts)
-
-        # Construct the full prompt
+        # Construct prompt
         full_prompt = f"""{self.system_prompt}
 
-User's situation: {user_query}
+User's check-in:
+"{user_query}"
 
 {context}
 
-Based on the user's situation and the relevant spiritual teachings above, provide compassionate and practical guidance. Your response should:
-1. Acknowledge the user's experience with empathy
-2. Share the most relevant teachings in a clear way
-3. Offer practical advice for applying these teachings
-4. End with an encouraging note
+Based on what the user shared and the spiritual teachings above, respond as Lumina.
 
-Response:"""
+See beneath their words. Use the teaching to reframe or challenge. Point to what they're not seeing.
 
-        # Generate response using the chat service
+2-3 sentences. Direct. Mystical. Sharp.
+
+Lumina's reflection:"""
+
+        # Generate with higher temperature for variety
         response = self.chat_service.generate(
-            full_prompt, max_tokens, temperature)
+            full_prompt,
+            max_tokens=max_tokens,
+            temperature=temperature
+        )
 
-        return response
+        return response.strip()
