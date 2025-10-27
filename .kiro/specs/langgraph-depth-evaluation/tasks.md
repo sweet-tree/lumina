@@ -44,7 +44,7 @@
   - Add logging for response generation timing
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 6.2, 6.3, 6.4, 6.5, 7.1, 7.2, 7.3, 10.1_
 
-- [ ] 6. Build and compile LangGraph workflow
+- [x] 6. Build and compile LangGraph workflow
 
   - Create LangGraphService class in langgraph_service.py
   - Initialize StateGraph with LuminaState
