@@ -205,16 +205,33 @@ class LangGraphService:
             "response": ""
         }
 
-        # Invoke the workflow
-        final_state = self.app.invoke(initial_state)
+        try:
+            # Invoke the workflow
+            final_state = self.app.invoke(initial_state)
 
-        elapsed = time.time() - start_time
-        logger.info(
-            f"Workflow: Complete | Depth: {final_state['depth_level']} | "
-            f"Total time: {elapsed:.2f}s"
-        )
+            elapsed = time.time() - start_time
 
-        return {
-            "response": final_state["response"],
-            "depth": final_state["depth_level"]
-        }
+            # Check if we exceeded timeout
+            if elapsed > 5.0:
+                logger.error(
+                    f"Workflow: Timeout | Execution took {elapsed:.2f}s (>5s limit)")
+                raise TimeoutError(
+                    f"Workflow execution exceeded 5 seconds ({elapsed:.2f}s)")
+
+            logger.info(
+                f"Workflow: Complete | Depth: {final_state['depth_level']} | "
+                f"Total time: {elapsed:.2f}s"
+            )
+
+            return {
+                "response": final_state["response"],
+                "depth": final_state["depth_level"]
+            }
+
+        except TimeoutError:
+            raise
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.error(
+                f"Workflow: Failed | Error: {e} | Time: {elapsed:.2f}s")
+            raise

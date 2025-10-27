@@ -9,6 +9,7 @@ This agent evaluates the depth of user check-in input and classifies it as:
 
 import logging
 from typing import Literal
+from tenacity import retry, stop_after_attempt, wait_exponential
 from backend.services.chat_service import ChatService
 from backend.services.langgraph_service import LuminaState
 
@@ -64,12 +65,17 @@ def evaluate_depth(state: LuminaState) -> dict:
     prompt = DEPTH_CLASSIFICATION_PROMPT.format(user_input=user_input)
 
     # Call LLM with low temperature for consistent classification
-    try:
-        response = chat_service.generate(
+    # Retry decorator applied to handle transient failures
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    def call_llm_with_retry():
+        return chat_service.generate(
             prompt=prompt,
             max_tokens=10,  # Only need one word
             temperature=0.3  # Low temperature for consistency
         )
+
+    try:
+        response = call_llm_with_retry()
 
         # Parse and validate response
         depth = response.strip().lower()

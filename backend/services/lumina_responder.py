@@ -9,6 +9,7 @@ This agent generates contextually appropriate responses based on depth:
 
 import logging
 import time
+from tenacity import retry, stop_after_attempt, wait_exponential
 from .chat_service import ChatService
 from .langgraph_service import LuminaState
 
@@ -94,12 +95,16 @@ Examples:
 - "What sensation is stress trying to show you?"
 """
 
-    try:
-        response = chat_service.generate(
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    def call_llm_with_retry():
+        return chat_service.generate(
             prompt=prompt,
             max_tokens=100,
             temperature=0.8  # Creative, varied questions
         )
+
+    try:
+        response = call_llm_with_retry()
 
         elapsed = time.time() - start_time
         logger.info(f"Node: respond_shallow | Time: {elapsed:.2f}s")
@@ -107,7 +112,10 @@ Examples:
         return {"response": response.strip()}
 
     except Exception as e:
-        logger.error(f"Node: respond_shallow | Error: {e}")
+        elapsed = time.time() - start_time
+        logger.error(
+            f"Node: respond_shallow | Error after retries: {e} | Time: {elapsed:.2f}s")
+        logger.warning("Node: respond_shallow | Using fallback response")
         # Fallback response
         return {"response": "What's here right now?"}
 
@@ -154,12 +162,16 @@ Example structure:
 "[Wisdom about their sensation]. [Provocative question]."
 """
 
-    try:
-        response = chat_service.generate(
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    def call_llm_with_retry():
+        return chat_service.generate(
             prompt=prompt,
             max_tokens=150,
             temperature=0.8  # Mystical, poetic
         )
+
+    try:
+        response = call_llm_with_retry()
 
         elapsed = time.time() - start_time
         logger.info(f"Node: respond_medium | Time: {elapsed:.2f}s")
@@ -167,7 +179,10 @@ Example structure:
         return {"response": response.strip()}
 
     except Exception as e:
-        logger.error(f"Node: respond_medium | Error: {e}")
+        elapsed = time.time() - start_time
+        logger.error(
+            f"Node: respond_medium | Error after retries: {e} | Time: {elapsed:.2f}s")
+        logger.warning("Node: respond_medium | Using fallback response")
         # Fallback response
         return {"response": "Stay with the sensation. What is it showing you?"}
 
@@ -213,12 +228,16 @@ Example:
 "The breath knows what the mind refuses to see. You're bracing against what hasn't happened yet. The body is asking you to arrive here, now."
 """
 
-    try:
-        response = chat_service.generate(
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    def call_llm_with_retry():
+        return chat_service.generate(
             prompt=prompt,
             max_tokens=150,
             temperature=0.9  # Highly mystical, poetic
         )
+
+    try:
+        response = call_llm_with_retry()
 
         elapsed = time.time() - start_time
         logger.info(f"Node: respond_deep | Time: {elapsed:.2f}s")
@@ -226,6 +245,9 @@ Example:
         return {"response": response.strip()}
 
     except Exception as e:
-        logger.error(f"Node: respond_deep | Error: {e}")
+        elapsed = time.time() - start_time
+        logger.error(
+            f"Node: respond_deep | Error after retries: {e} | Time: {elapsed:.2f}s")
+        logger.warning("Node: respond_deep | Using fallback response")
         # Fallback response
         return {"response": "The body speaks truth. Listen."}
