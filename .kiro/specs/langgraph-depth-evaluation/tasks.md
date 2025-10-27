@@ -27,14 +27,14 @@
   - Add logging for number of passages retrieved
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 10.3_
 
-- [ ] 4. Implement conditional routing logic
+- [x] 4. Implement conditional routing logic
 
   - Create route_by_depth function that returns depth_level from state
   - Configure LangGraph conditional edges mapping shallow/medium/deep to response nodes
   - Add logging for routing decisions
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 10.2_
 
-- [ ] 5. Implement Lumina responder agents
+- [x] 5. Implement Lumina responder agents
 
   - Create backend/services/lumina_responder.py with Plant Teacher system prompt
   - Implement respond_shallow function generating 1-2 sentence provocative questions using RAG context for mystical style
