@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Card } from "@/features/cards/components/Card";
 import { drawRandomCard, submitCardSession } from "@/features/cards/actions";
+import { BreathingCard } from "@/features/breathing-card";
+import { useBreathingCardState } from "@/features/breathing-card";
 import { Sparkles } from "lucide-react";
 
 type CardData = {
@@ -24,6 +26,10 @@ export default function PracticePage() {
   const [card, setCard] = useState<CardData | null>(null);
   const [reflection, setReflection] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Check if user needs to see breathing card first
+  const { isFirstTime, markBreathingComplete, isLoading } =
+    useBreathingCardState();
 
   // Draw card mutation
   const drawMutation = useMutation({
@@ -64,6 +70,48 @@ export default function PracticePage() {
     setError(null);
   };
 
+  const handleBreathingComplete = async () => {
+    try {
+      await markBreathingComplete();
+      console.log("Breathing card completed, continuing to practice");
+    } catch (error) {
+      console.error("Failed to mark breathing card as completed:", error);
+      // Continue to practice even if API fails (localStorage fallback should work)
+    }
+  };
+
+  // Show loading state while checking breathing card status
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show breathing card for first-time users
+  if (isFirstTime) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-950 px-4">
+        {/* Lumina's Greeting */}
+        <div className="mb-16 max-w-md text-center">
+          <p className="text-lg text-white/80 leading-relaxed">
+            You&apos;ve been looking for something. That&apos;s why you&apos;re
+            here.
+          </p>
+          <p className="mt-4 text-lg text-white/80 leading-relaxed">
+            I can show you what you&apos;re looking for, but only if you show me
+            what&apos;s true.
+          </p>
+        </div>
+
+        {/* Breathing Card */}
+        <BreathingCard onComplete={handleBreathingComplete} />
+      </div>
+    );
+  }
+
+  // Show regular practice content for returning users
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center justify-center">
       {/* Error Message */}

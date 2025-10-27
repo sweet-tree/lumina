@@ -181,3 +181,96 @@
 .card-back {
   transform: rotateY(180deg);
 }
+/* Breathing Card Animations */
+.scale-80 {
+  transform: scale(0.8);
+}
+
+.scale-120 {
+  transform: scale(1.2);
+}
+
+.shadow-glow-bright {
+  box-shadow: 0 0 40px rgba(255, 254, 245, 0.3);
+}
+
+.shadow-glow-dim {
+  box-shadow: 0 0 40px rgba(255, 254, 245, 0.1);
+}
+
+.bg-glow-bright {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 254, 245, 0.2) 0%,
+    transparent 70%
+  );
+}
+
+.bg-glow-dim {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 254, 245, 0.1) 0%,
+    transparent 70%
+  );
+}
+
+/* Custom duration for breathing animations */
+.duration-\[4000ms\] {
+  transition-duration: 4000ms;
+}
+
+.duration-\[6000ms\] {
+  transition-duration: 6000ms;
+}
+/* Simple CSS-only breathing animation */
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(0.8);
+    box-shadow: 0 0 20px rgba(255, 254, 245, 0.1);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 40px rgba(255, 254, 245, 0.3);
+  }
+}
+
+@keyframes breathe-glow {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes breathe-text {
+  0%,
+  20%,
+  80%,
+  100% {
+    opacity: 0.8;
+  }
+  40%,
+  60% {
+    opacity: 0.3;
+  }
+}
+
+.breathing-animation {
+  animation: breathe 10s ease-in-out infinite;
+}
+
+.breathing-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 254, 245, 0.2) 0%,
+    transparent 70%
+  );
+  animation: breathe-glow 10s ease-in-out infinite;
+}
+
+.breathing-text {
+  animation: breathe-text 10s ease-in-out infinite;
+}

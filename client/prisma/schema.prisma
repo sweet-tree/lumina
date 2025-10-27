@@ -1,33 +1,28 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-// NextAuth models
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -41,16 +36,18 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  diaryEntries  DiaryEntry[]
-  cardSessions  CardSession[]
-  createdAt     DateTime  @default(now())
+  id                        String        @id @default(cuid())
+  name                      String?
+  email                     String?       @unique
+  emailVerified             DateTime?
+  image                     String?
+  createdAt                 DateTime      @default(now())
+  breathingCardCompletedAt  DateTime?
+  hasCompletedBreathingCard Boolean       @default(false)
+  accounts                  Account[]
+  cardSessions              CardSession[]
+  diaryEntries              DiaryEntry[]
+  sessions                  Session[]
 }
 
 model VerificationToken {
@@ -61,75 +58,67 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Legacy diary model (keep for now)
 model DiaryEntry {
-  id              String   @id @default(cuid())
-  userId          String
-  content         String   @db.Text
-  aiResponse      String?  @db.Text
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  entryDate       DateTime @default(now()) @db.Date
-  
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id         String   @id @default(cuid())
+  userId     String
+  content    String
+  aiResponse String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  entryDate  DateTime @default(now()) @db.Date
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([userId, entryDate])
 }
 
-// New card-based system
 model Card {
-  id                String   @id @default(cuid())
-  type              String   // body, energy, mind, integration
-  state             String   // tension, flow, clarity, depletion, etc.
-  title             String
-  guidingPrompt     String   @db.Text  // Main prompt for the card
-  questions         Json     // Array of guiding questions (optional hints)
-  reflectionPrompt  String   @db.Text  // Prompt for AI mini-reflection
-  icon              String
-  color             String
-  deck              String   @default("core")
-  order             Int
-  
-  // Leela-inspired relationships
-  ascendingStates   String[]  // States this naturally leads to (ladders)
-  descendingStates  String[]  // States this can decline to (snakes)
-  breaksPatternOf   String[]  // States this interrupts/transforms
-  
-  sessions          CardSession[]
-  createdAt         DateTime @default(now())
-  
+  id               String        @id @default(cuid())
+  type             String
+  state            String
+  title            String
+  guidingPrompt    String
+  questions        Json
+  reflectionPrompt String
+  icon             String
+  color            String
+  deck             String        @default("core")
+  order            Int
+  ascendingStates  String[]
+  descendingStates String[]
+  breaksPatternOf  String[]
+  createdAt        DateTime      @default(now())
+  sessions         CardSession[]
+
   @@index([deck])
   @@index([state])
 }
 
 model CardSession {
-  id              String   @id @default(cuid())
-  userId          String
-  cardId          String
-  state           String   // State user was in (from card)
-  timestamp       DateTime @default(now())
-  answer          String   @db.Text  // Single answer (hybrid input)
-  miniReflection  String?  @db.Text  // AI-generated reflection
-  
-  user  User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  card  Card @relation(fields: [cardId], references: [id])
-  
+  id             String   @id @default(cuid())
+  userId         String
+  cardId         String
+  state          String
+  timestamp      DateTime @default(now())
+  answer         String
+  miniReflection String?
+  card           Card     @relation(fields: [cardId], references: [id])
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, timestamp])
   @@index([userId, state])
 }
 
-// Future: Daily synthesis
 model DailySynthesis {
-  id                String   @id @default(cuid())
-  userId            String
-  date              DateTime @db.Date
-  cardSessionIds    String[] // Array of session IDs from today
-  synthesis         String   @db.Text  // AI-generated daily synthesis
-  journeyPattern    String?  // e.g., "descending", "ascending", "cycling"
-  stateTransitions  Json?    // Array of state transitions
-  createdAt         DateTime @default(now())
-  
+  id               String   @id @default(cuid())
+  userId           String
+  date             DateTime @db.Date
+  cardSessionIds   String[]
+  synthesis        String
+  journeyPattern   String?
+  stateTransitions Json?
+  createdAt        DateTime @default(now())
+
   @@unique([userId, date])
   @@index([userId, date])
 }
