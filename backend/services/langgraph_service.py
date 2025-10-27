@@ -212,11 +212,11 @@ class LangGraphService:
             elapsed = time.time() - start_time
 
             # Check if we exceeded timeout
-            if elapsed > 5.0:
+            if elapsed > 10.0:
                 logger.error(
-                    f"Workflow: Timeout | Execution took {elapsed:.2f}s (>5s limit)")
+                    f"Workflow: Timeout | Execution took {elapsed:.2f}s (>10s limit)")
                 raise TimeoutError(
-                    f"Workflow execution exceeded 5 seconds ({elapsed:.2f}s)")
+                    f"Workflow execution exceeded 10 seconds ({elapsed:.2f}s)")
 
             logger.info(
                 f"Workflow: Complete | Depth: {final_state['depth_level']} | "

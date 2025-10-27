@@ -1,8 +1,17 @@
 from backend.services.rag_service import RAGService
+from backend.services.langgraph_service import LangGraphService
+from backend.routes import checkin
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 # Create FastAPI application instance
 app = FastAPI(
@@ -10,6 +19,10 @@ app = FastAPI(
     description="Backend API for the Lumina document processing system",
     version="0.1.0"
 )
+
+# Initialize LangGraph service at startup (singleton)
+# This compiles the workflow once and reuses it for all requests
+app.state.langgraph_service = LangGraphService()
 
 # Configure CORS
 app.add_middleware(
@@ -19,6 +32,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register routers
+app.include_router(checkin.router)
 
 # Request model for chat endpoint
 
