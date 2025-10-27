@@ -100,3 +100,24 @@ def retrieve_context(state: LuminaState) -> dict:
             "Node: retrieve_context | Continuing with empty rag_contexts")
 
         return {"rag_contexts": []}
+
+
+def route_by_depth(state: LuminaState) -> Literal["shallow", "medium", "deep"]:
+    """
+    Routes workflow to appropriate response node based on depth classification.
+
+    This function is used by LangGraph's conditional edges to determine
+    which response generator to invoke based on the depth_level in state.
+
+    Args:
+        state: Current workflow state with depth_level
+
+    Returns:
+        Node name to route to: "shallow", "medium", or "deep"
+
+    Logs:
+        - INFO: Routing decision (depth level)
+    """
+    depth = state["depth_level"]
+    logger.info(f"Routing: depth={depth} → respond_{depth}")
+    return depth
