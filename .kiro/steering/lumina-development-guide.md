@@ -193,6 +193,8 @@ evaluate_depth → [retrieve_buddhist, retrieve_vedic, retrieve_shamanic] → ro
 
 - Power of Now (Eckhart Tolle)
 - Stored in Pinecone vector store, namespace: "spiritual-library"
+- Using existing VectorStoreService with Qwen3-Embedding-8B
+- Custom reranking with cosine similarity
 
 **Future (Parallel Retrieval):**
 
@@ -201,6 +203,13 @@ evaluate_depth → [retrieve_buddhist, retrieve_vedic, retrieve_shamanic] → ro
 - Leela teachings (72 consciousness squares)
 - Shamanic concepts (plant medicine, ceremony)
 - Dzogchen texts (Tibetan Buddhism)
+
+**RAG Enhancement Path (if needed):**
+
+1. Test current retrieval quality first
+2. If needed: Add Cohere Rerank API (drop-in replacement)
+3. If still needed: Consider LlamaIndex for advanced features
+4. Keep interface the same - easy to swap implementations
 
 ### Response Depth Guidelines
 
