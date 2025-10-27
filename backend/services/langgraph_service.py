@@ -121,3 +121,100 @@ def route_by_depth(state: LuminaState) -> Literal["shallow", "medium", "deep"]:
     depth = state["depth_level"]
     logger.info(f"Routing: depth={depth} → respond_{depth}")
     return depth
+
+
+class LangGraphService:
+    """
+    Main service that orchestrates the LangGraph workflow.
+
+    This service builds and compiles the complete workflow:
+    START → evaluate_depth → retrieve_context → route → respond_* → END
+    """
+
+    def __init__(self):
+        """Initialize the LangGraph workflow and compile it."""
+        from langgraph.graph import StateGraph, START, END
+        from .depth_evaluator import evaluate_depth
+        from .lumina_responder import respond_shallow, respond_medium, respond_deep
+
+        logger.info("Initializing LangGraph workflow...")
+
+        # Create the state graph
+        workflow = StateGraph(LuminaState)
+
+        # Add nodes
+        workflow.add_node("evaluate_depth", evaluate_depth)
+        workflow.add_node("retrieve_context", retrieve_context)
+        workflow.add_node("respond_shallow", respond_shallow)
+        workflow.add_node("respond_medium", respond_medium)
+        workflow.add_node("respond_deep", respond_deep)
+
+        # Configure edges
+        # START → evaluate_depth
+        workflow.add_edge(START, "evaluate_depth")
+
+        # evaluate_depth → retrieve_context
+        workflow.add_edge("evaluate_depth", "retrieve_context")
+
+        # retrieve_context → conditional routing based on depth
+        workflow.add_conditional_edges(
+            "retrieve_context",
+            route_by_depth,
+            {
+                "shallow": "respond_shallow",
+                "medium": "respond_medium",
+                "deep": "respond_deep"
+            }
+        )
+
+        # All response nodes → END
+        workflow.add_edge("respond_shallow", END)
+        workflow.add_edge("respond_medium", END)
+        workflow.add_edge("respond_deep", END)
+
+        # Compile the workflow
+        self.app = workflow.compile()
+
+        logger.info("LangGraph workflow compiled successfully")
+
+    def process_checkin(self, user_input: str) -> dict:
+        """
+        Process a user check-in through the complete workflow.
+
+        Args:
+            user_input: The user's check-in text
+
+        Returns:
+            Dict with 'response' and 'depth' keys
+
+        Raises:
+            Exception: If workflow execution fails
+
+        Logs:
+            - INFO: Workflow start and completion with total time
+        """
+        start_time = time.time()
+
+        logger.info(f"Workflow: Starting | Input: {user_input[:50]}...")
+
+        # Create initial state
+        initial_state: LuminaState = {
+            "user_input": user_input,
+            "depth_level": "medium",  # Will be overwritten by evaluate_depth
+            "rag_contexts": [],
+            "response": ""
+        }
+
+        # Invoke the workflow
+        final_state = self.app.invoke(initial_state)
+
+        elapsed = time.time() - start_time
+        logger.info(
+            f"Workflow: Complete | Depth: {final_state['depth_level']} | "
+            f"Total time: {elapsed:.2f}s"
+        )
+
+        return {
+            "response": final_state["response"],
+            "depth": final_state["depth_level"]
+        }
