@@ -23,7 +23,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - `update_triggers(store, user_id, triggers) -> None`
   - _Requirements: 2.1, 10.5_
 
-- [ ] 2. Implement Extraction Agent
+- [x] 2. Implement Extraction Agent
 
   - [x] 2.1 Create extraction agent node function
 
@@ -40,7 +40,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Log extraction results
     - _Requirements: 1.4, 1.5_
 
-  - [x] 2.3 Write unit tests for extraction agent
+  - [ ] 2.3 Write unit tests for extraction agent
     - Test with shallow input ("stressed")
     - Test with deep input ("chest tight, breath shallow, meeting soon")
     - Test with edge cases (empty input, very long input)
