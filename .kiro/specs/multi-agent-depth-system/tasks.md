@@ -8,12 +8,19 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
 
 ## Tasks
 
-- [ ] 1. Set up LangGraph Store and state schema
+- [ ] 1. Set up LangGraph PostgresStore and state schema
 
-  - Install `langgraph-checkpoint` for Store support
+  - Install `langgraph-checkpoint-postgres` for PostgresStore support
+  - Create new file `backend/services/multi_agent_service.py`
   - Define `MultiAgentState` TypedDict with all required fields
-  - Initialize LangGraph Store (InMemoryStore for development)
-  - Create helper functions for Store operations (get, put, list)
+  - Initialize PostgresStore connected to existing Supabase database (use DATABASE_URL from backend/.env)
+  - Run `store.setup()` once to create Store tables in Supabase
+  - Create `backend/services/user_memory.py` with helper functions:
+    - `get_user_baseline(store, user_id) -> float`
+    - `update_user_baseline(store, user_id, score) -> None`
+    - `get_user_patterns(store, user_id) -> dict`
+    - `update_body_patterns(store, user_id, signals) -> None`
+    - `update_triggers(store, user_id, triggers) -> None`
   - _Requirements: 2.1, 10.5_
 
 - [ ] 2. Implement Extraction Agent

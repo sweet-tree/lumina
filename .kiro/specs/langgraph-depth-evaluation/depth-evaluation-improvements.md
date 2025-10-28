@@ -690,22 +690,31 @@ Input + Context (time, streak, last depth) → Adjusted classification
 **Build:**
 
 1. Extraction Agent (structured signal extraction)
-2. Deep Agent with LangGraph Store (user model + memory)
+2. Deep Agent with LangGraph PostgresStore (user model + memory)
 3. Teaching Agent (pedagogical strategy)
 4. Card Agent (reward logic)
 
+**Storage:**
+
+- LangGraph PostgresStore connected to existing Supabase database
+- Helper functions in `backend/services/user_memory.py`
+- JSON-based memory storage (baseline, patterns, triggers)
+
 **Deliverables:**
 
+- New service file: `backend/services/multi_agent_service.py`
+- PostgresStore setup in Supabase (run `store.setup()` once)
+- User memory helper functions (get/update baseline, patterns, triggers)
 - LangGraph workflow with 4 agents
-- User model schema in Store
 - Basic pattern detection (loops, triggers)
 - Card award logic
 
 **Expected Impact:**
 
-- Personalized depth evaluation
-- User guidance system
+- Personalized depth evaluation (relative to user baseline)
+- User guidance system (Teaching Agent)
 - Pattern recognition foundation
+- Persistent memory across sessions
 
 ---
 
@@ -713,9 +722,9 @@ Input + Context (time, streak, last depth) → Adjusted classification
 
 **Enhance:**
 
-1. Deep Agent memory files (body_patterns, triggers, loops, doorways)
+1. Deep Agent memory operations (body_patterns, triggers, loops, doorways in PostgresStore)
 2. Pattern detection algorithms (loop identification, doorway discovery)
-3. Baseline calculation (rolling average)
+3. Baseline calculation (rolling average of last 20 check-ins)
 4. Trajectory tracking (progression over time)
 
 **Deliverables:**

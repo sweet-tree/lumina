@@ -335,10 +335,12 @@ def call_llm(prompt: str) -> str:
 
 1. ✅ Four-agent system: Extraction, Deep (Memory), Teaching, Card
 2. ✅ Depth is relative to user baseline, not absolute
-3. ✅ LangGraph Store for long-term user memory
-4. ✅ Teaching Agent guides users deeper when stuck
-5. ✅ Card Agent decides rewards (earned, not automatic)
-6. ✅ Separation of concerns (each agent has one job)
+3. ✅ LangGraph PostgresStore connected to existing Supabase database
+4. ✅ Helper functions in `user_memory.py` for Store operations
+5. ✅ Teaching Agent guides users deeper when stuck
+6. ✅ Card Agent decides rewards (earned, not automatic)
+7. ✅ Separation of concerns (each agent has one job)
+8. ✅ New service file: `multi_agent_service.py` (clean separation from old system)
 
 ---
 
@@ -377,15 +379,28 @@ Four specialized agents work together to evaluate depth, maintain user memory, g
 
 **Responsibility:** Maintain user model, detect patterns, evaluate relative depth
 
-**Uses LangGraph Store:**
+**Uses LangGraph PostgresStore:**
+
+Connected to existing Supabase PostgreSQL database.
 
 ```
-/memories/user_{id}/
-  body_patterns.txt      # Body locations + frequencies
-  triggers.txt           # What causes patterns
-  loops_doorways.txt     # Detected patterns
-  baseline.txt           # User's typical specificity
-  progression.txt        # Trajectory over time
+Namespace: ("memories", user_id)
+Store Items (JSON format):
+  - "body_patterns"      # Body locations + frequencies
+  - "triggers"           # What causes patterns
+  - "loops_doorways"     # Detected patterns
+  - "baseline"           # User's typical specificity
+  - "progression"        # Trajectory over time
+```
+
+**Helper Functions:** `backend/services/user_memory.py`
+
+```python
+get_user_baseline(store, user_id) -> float
+update_user_baseline(store, user_id, score)
+get_user_patterns(store, user_id) -> dict
+update_body_patterns(store, user_id, signals)
+update_triggers(store, user_id, triggers)
 ```
 
 **Key Logic:**

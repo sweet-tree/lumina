@@ -129,23 +129,30 @@ def extraction_agent(state: MultiAgentState) -> dict:
 
 **Purpose:** Maintain user model, detect patterns, evaluate relative depth
 
-**LangGraph Store Structure:**
+**Storage:** LangGraph PostgresStore connected to existing Supabase database
+
+**Store Structure:**
 
 ```
-/memories/user_{id}/
-  body_patterns.txt       # Body locations + frequencies
-  triggers.txt            # Contextual factors + frequencies
-  loops_doorways.txt      # Detected patterns
-  baseline.txt            # Rolling average specificity
-  progression.txt         # Trajectory over time
+Namespace: ("memories", user_id)
+Keys:
+  - "body_patterns"      # Body locations + frequencies
+  - "triggers"           # Contextual factors + frequencies
+  - "loops_doorways"     # Detected patterns
+  - "baseline"           # Rolling average specificity
+  - "progression"        # Trajectory over time
 ```
 
 **Implementation:**
 
 ```python
-from langgraph.store import InMemoryStore
+from langgraph.store.postgres import PostgresStore
+import os
 
-store = InMemoryStore()
+# Connect to existing Supabase database
+DB_URI = os.getenv("DATABASE_URL")
+store = PostgresStore.from_conn_string(DB_URI)
+# store.setup()  # Run once to create Store tables
 
 def deep_agent(state: MultiAgentState) -> dict:
     """
@@ -432,59 +439,137 @@ def generate_response(state: MultiAgentState) -> dict:
 
 ## Data Models
 
-### User Memory Files
+### User Memory Structure (PostgresStore)
 
-**baseline.txt:**
+**Storage:** LangGraph PostgresStore connected to existing Supabase PostgreSQL database
 
-```
-# User Baseline Specificity
-# Rolling average of last 20 check-ins
+**Store Namespace:** `("memories", user_id)`
 
-current_baseline: 5.2
-checkin_count: 47
-last_20_scores: [6, 4, 7, 5, 3, 8, 6, 5, 4, 7, 6, 5, 4, 6, 7, 5, 4, 6, 5, 7]
-```
+**Store Items (JSON format):**
 
-**body_patterns.txt:**
+**"baseline":**
 
-```
-# Body Patterns
-
-shoulders: 23
-chest: 15
-jaw: 8
-stomach: 5
-breath: 12
+```json
+{
+  "current_baseline": 5.2,
+  "checkin_count": 47,
+  "last_20_scores": [6, 4, 7, 5, 3, 8, 6, 5, 4, 7, 6, 5, 4, 6, 7, 5, 4, 6, 5, 7]
+}
 ```
 
-**triggers.txt:**
+**"body_patterns":**
 
+```json
+{
+  "shoulders": 23,
+  "chest": 15,
+  "jaw": 8,
+  "stomach": 5,
+  "breath": 12
+}
 ```
-# Triggers
 
-meetings: 18
-mondays: 12
-work: 31
-sleep_deprived: 7
+**"triggers":**
+
+```json
+{
+  "meetings": 18,
+  "mondays": 12,
+  "work": 31,
+  "sleep_deprived": 7
+}
 ```
 
-**loops_doorways.txt:**
+**"loops_doorways":**
 
+```json
+{
+  "loops": [
+    {
+      "name": "The Monday Morning Spiral",
+      "sequence": ["tension", "depleted", "foggy"],
+      "frequency": 8,
+      "first_seen": "2025-10-01",
+      "last_seen": "2025-10-28"
+    }
+  ],
+  "doorways": [
+    {
+      "name": "Awareness Break",
+      "sequence": ["awareness", "ease"],
+      "frequency": 5,
+      "breaks_loop": "The Monday Morning Spiral"
+    }
+  ]
+}
 ```
-# Detected Patterns
 
-## Loops
-- name: "The Monday Morning Spiral"
-  sequence: ["tension", "depleted", "foggy"]
-  frequency: 8
-  first_seen: 2025-10-01
-  last_seen: 2025-10-28
+### Helper Functions (backend/services/user_memory.py)
 
-## Doorways
-- name: "Awareness Break"
-  sequence: ["awareness", "ease"]
-  frequency: 5
-  breaks_loop: "The Monday Morning Spiral"
+High-level abstraction layer for Store operations:
+
+```python
+from langgraph.store.base import BaseStore
+
+def get_user_baseline(store: BaseStore, user_id: str) -> float:
+    """Get user's baseline specificity score."""
+    namespace = ("memories", user_id)
+    item = store.get(namespace, "baseline")
+    return item.value.get("current_baseline", 5.0) if item else 5.0
+
+def update_user_baseline(store: BaseStore, user_id: str, new_score: float) -> None:
+    """Update user's baseline with rolling average of last 20 scores."""
+    namespace = ("memories", user_id)
+    current = store.get(namespace, "baseline")
+
+    if current:
+        data = current.value
+        scores = data.get("last_20_scores", [])
+        scores.append(new_score)
+        scores = scores[-20:]  # Keep last 20
+        baseline = sum(scores) / len(scores)
+
+        store.put(namespace, "baseline", {
+            "current_baseline": baseline,
+            "checkin_count": data.get("checkin_count", 0) + 1,
+            "last_20_scores": scores
+        })
+    else:
+        # First check-in
+        store.put(namespace, "baseline", {
+            "current_baseline": new_score,
+            "checkin_count": 1,
+            "last_20_scores": [new_score]
+        })
+
+def get_user_patterns(store: BaseStore, user_id: str) -> dict:
+    """Get detected loops, doorways, and triggers."""
+    namespace = ("memories", user_id)
+    item = store.get(namespace, "loops_doorways")
+    return item.value if item else {"loops": [], "doorways": []}
+
+def update_body_patterns(store: BaseStore, user_id: str, body_signals: list) -> None:
+    """Update body pattern frequencies."""
+    namespace = ("memories", user_id)
+    current = store.get(namespace, "body_patterns")
+    patterns = current.value if current else {}
+
+    for signal in body_signals:
+        location = signal.split(":")[0].strip()
+        patterns[location] = patterns.get(location, 0) + 1
+
+    store.put(namespace, "body_patterns", patterns)
+
+def update_triggers(store: BaseStore, user_id: str, triggers: list) -> None:
+    """Update trigger frequencies."""
+    namespace = ("memories", user_id)
+    current = store.get(namespace, "triggers")
+    trigger_counts = current.value if current else {}
+
+    for trigger in triggers:
+        trigger_counts[trigger] = trigger_counts.get(trigger, 0) + 1
+
+    store.put(namespace, "triggers", trigger_counts)
 ```
 
 ---
