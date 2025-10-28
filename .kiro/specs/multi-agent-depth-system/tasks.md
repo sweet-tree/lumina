@@ -23,7 +23,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - `update_triggers(store, user_id, triggers) -> None`
   - _Requirements: 2.1, 10.5_
 
-- [x] 2. Implement Extraction Agent
+- [x] 2. Implement Extraction Agent ✓
 
   - [x] 2.1 Create extraction agent node function
 
@@ -40,7 +40,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Log extraction results
     - _Requirements: 1.4, 1.5_
 
-  - [ ] 2.3 Write unit tests for extraction agent
+  - [x] 2.3 Write unit tests for extraction agent
     - Test with shallow input ("stressed")
     - Test with deep input ("chest tight, breath shallow, meeting soon")
     - Test with edge cases (empty input, very long input)
@@ -48,46 +48,45 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
 
 - [ ] 3. Implement Deep Agent with memory
 
-  - [ ] 3.1 Create user memory file structure
+  - [x] 3.1 Create Deep Agent node function
 
-    - Define memory file paths for each user
-    - Create baseline.txt schema
-    - Create body_patterns.txt schema
-    - Create triggers.txt schema
-    - Create loops_doorways.txt schema
+    - Create `backend/services/deep_agent.py`
+    - Implement `deep_agent_node()` function for LangGraph
+    - Load user memory using helper functions from `user_memory.py`
+    - Calculate user baseline from Store
     - _Requirements: 2.1, 2.2, 2.3_
 
-  - [ ] 3.2 Implement memory read/write operations
+  - [ ] 3.2 Implement relative depth evaluation
 
-    - Write `load_baseline()` function
-    - Write `update_baseline()` function (rolling average)
-    - Write `update_body_patterns()` function
-    - Write `update_triggers()` function
-    - Handle missing files (new users)
-    - _Requirements: 2.2, 2.3, 2.4_
-
-  - [ ] 3.3 Implement relative depth evaluation
-
-    - Calculate depth relative to user baseline
-    - Handle new users (< 5 check-ins) with default baseline
-    - Return depth classification with baseline for transparency
+    - Calculate depth relative to user baseline (not absolute)
+    - Logic: if specificity > baseline + 2 → "deep"
+    - Logic: if specificity < baseline - 2 → "shallow"
+    - Logic: else → "medium"
+    - Handle new users (< 5 check-ins) with default baseline 5.0
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-  - [ ] 3.4 Implement pattern detection
+  - [ ] 3.3 Update user memory after evaluation
 
-    - Write `detect_loops()` function (recurring sequences)
-    - Write `detect_doorways()` function (loop-breaking transitions)
-    - Write `detect_triggers()` function (frequent contextual factors)
-    - Assign human-readable names to patterns
-    - Store patterns in loops_doorways.txt
+    - Update baseline with new specificity score (rolling average)
+    - Update body_patterns with extracted body signals
+    - Update triggers with extracted triggers
+    - Use helper functions from `user_memory.py`
+    - _Requirements: 2.2, 2.3, 2.4_
+
+  - [ ] 3.4 Implement basic pattern detection
+
+    - Detect if user is in a loop (recurring shallow states)
+    - Track trajectory (stuck_shallow_count, regressing, progressing)
+    - Store pattern data in user_model dict
+    - Advanced pattern detection (loops/doorways) can be added later
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
   - [ ]\* 3.5 Write unit tests for Deep Agent
     - Test baseline calculation
     - Test relative depth evaluation
-    - Test pattern detection with mock history
+    - Test memory updates
     - Test new user handling
-    - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, 4.3_
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3_
 
 - [ ] 4. Implement Teaching Agent
 
