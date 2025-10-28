@@ -8,7 +8,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
 
 ## Tasks
 
-- [ ] 1. Set up LangGraph PostgresStore and state schema
+- [x] 1. Set up LangGraph PostgresStore and state schema
 
   - Install `langgraph-checkpoint-postgres` for PostgresStore support
   - Create new file `backend/services/multi_agent_service.py`
