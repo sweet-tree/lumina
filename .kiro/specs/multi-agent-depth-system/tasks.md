@@ -40,7 +40,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Log extraction results
     - _Requirements: 1.4, 1.5_
 
-  - [ ]\* 2.3 Write unit tests for extraction agent
+  - [x] 2.3 Write unit tests for extraction agent
     - Test with shallow input ("stressed")
     - Test with deep input ("chest tight, breath shallow, meeting soon")
     - Test with edge cases (empty input, very long input)
