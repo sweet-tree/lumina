@@ -58,22 +58,33 @@ class TestDeepAgent(unittest.TestCase):
         depth = self.agent._calculate_relative_depth(2.9, 5.0)
         self.assertEqual(depth, 'shallow')
 
-    def test_trajectory_progressing(self):
+    @patch('backend.services.user_memory.get_recent_scores')
+    def test_trajectory_progressing(self, mock_recent_scores):
         """Test trajectory when user is progressing"""
+        mock_recent_scores.return_value = [5.0, 5.5, 6.0, 6.5, 7.0]
+
         trajectory = self.agent._calculate_trajectory('test_user', 9.0, 5.0)
 
         self.assertTrue(trajectory['progressing'])
         self.assertFalse(trajectory['regressing'])
 
-    def test_trajectory_regressing(self):
+    @patch('backend.services.user_memory.get_recent_scores')
+    def test_trajectory_regressing(self, mock_recent_scores):
         """Test trajectory when user is regressing"""
-        trajectory = self.agent._calculate_trajectory('test_user', 1.0, 5.0)
+        # Previous scores were higher, now dropping
+        mock_recent_scores.return_value = [6.0, 6.5, 7.0, 6.5, 6.0]
+
+        trajectory = self.agent._calculate_trajectory('test_user', 3.0, 5.0)
 
         self.assertTrue(trajectory['regressing'])
         self.assertFalse(trajectory['progressing'])
 
-    def test_trajectory_stuck_shallow(self):
+    @patch('backend.services.user_memory.get_recent_scores')
+    def test_trajectory_stuck_shallow(self, mock_recent_scores):
         """Test trajectory when user is stuck shallow"""
+        # Multiple consecutive shallow scores
+        mock_recent_scores.return_value = [2.0, 2.5, 2.0, 1.5, 2.0]
+
         trajectory = self.agent._calculate_trajectory('test_user', 2.0, 5.0)
 
         self.assertGreater(trajectory['stuck_shallow_count'], 0)

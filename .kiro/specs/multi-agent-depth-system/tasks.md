@@ -90,7 +90,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
 
 - [ ] 4. Implement Teaching Agent
 
-  - [ ] 4.1 Create teaching strategy decision logic
+  - [x] 4.1 Create teaching strategy decision logic
 
     - Implement "question" strategy (stuck shallow 5+ days)
     - Implement "challenge" strategy (regressing)
@@ -99,7 +99,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Return strategy with guidance and reason
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-  - [ ] 4.2 Create trajectory calculation helper
+  - [x] 4.2 Create trajectory calculation helper
 
     - Calculate stuck_shallow_count from recent check-ins
     - Detect regression (current < previous 3 average)

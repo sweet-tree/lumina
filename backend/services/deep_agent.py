@@ -118,10 +118,12 @@ class DeepAgent:
             baseline: User's baseline
 
         Returns:
-            dict: Trajectory information
+            dict: Trajectory information with stuck_shallow_count, regressing, progressing
         """
-        # For now, simple trajectory based on current vs baseline
-        # TODO: Track last N check-ins for more accurate trajectory
+        from .user_memory import get_recent_scores
+
+        # Get recent check-in scores to detect trends
+        recent_scores = get_recent_scores(self.store, user_id, limit=5)
 
         trajectory = {
             "stuck_shallow_count": 0,
@@ -129,17 +131,32 @@ class DeepAgent:
             "progressing": False
         }
 
-        # Simple heuristic: if consistently below baseline, might be stuck
-        if current_specificity < baseline - 2:
-            trajectory["stuck_shallow_count"] = 1  # Simplified for now
+        # Calculate stuck_shallow_count: consecutive shallow check-ins
+        if recent_scores:
+            stuck_count = 0
+            for score in reversed(recent_scores):  # Most recent first
+                if score < baseline - 2:  # Shallow relative to baseline
+                    stuck_count += 1
+                else:
+                    break  # Stop at first non-shallow
+            trajectory["stuck_shallow_count"] = stuck_count
+        else:
+            # First check-in or no history
+            if current_specificity < baseline - 2:
+                trajectory["stuck_shallow_count"] = 1
 
-        # Check if regressing (current much lower than baseline)
-        if current_specificity < baseline - 3:
-            trajectory["regressing"] = True
+        # Detect regression: current is lower than average of previous 3
+        if len(recent_scores) >= 3:
+            previous_avg = sum(recent_scores[-3:]) / 3
+            if current_specificity < previous_avg - 1.5:
+                trajectory["regressing"] = True
 
-        # Check if progressing (current much higher than baseline)
+        # Detect progression: current is higher than baseline by significant margin
         if current_specificity > baseline + 3:
             trajectory["progressing"] = True
+
+        logger.info(
+            f"Trajectory: stuck={trajectory['stuck_shallow_count']}, regressing={trajectory['regressing']}, progressing={trajectory['progressing']}")
 
         return trajectory
 

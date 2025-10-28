@@ -173,3 +173,25 @@ def get_triggers(store: BaseStore, user_id: str) -> dict:
         return item.value
 
     return {}
+
+
+def get_recent_scores(store: BaseStore, user_id: str, limit: int = 5) -> list:
+    """
+    Get recent specificity scores for trajectory calculation.
+
+    Args:
+        store: LangGraph Store instance
+        user_id: User identifier
+        limit: Number of recent scores to return
+
+    Returns:
+        list: Recent specificity scores (most recent last)
+    """
+    namespace = ("memories", user_id)
+    item = store.get(namespace, "baseline")
+
+    if item and item.value:
+        scores = item.value.get("last_20_scores", [])
+        return scores[-limit:] if len(scores) > limit else scores
+
+    return []
