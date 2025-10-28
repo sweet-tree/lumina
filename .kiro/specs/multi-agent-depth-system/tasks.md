@@ -56,7 +56,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Calculate user baseline from Store
     - _Requirements: 2.1, 2.2, 2.3_
 
-  - [ ] 3.2 Implement relative depth evaluation
+  - [x] 3.2 Implement relative depth evaluation
 
     - Calculate depth relative to user baseline (not absolute)
     - Logic: if specificity > baseline + 2 → "deep"
@@ -65,7 +65,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Handle new users (< 5 check-ins) with default baseline 5.0
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-  - [ ] 3.3 Update user memory after evaluation
+  - [x] 3.3 Update user memory after evaluation
 
     - Update baseline with new specificity score (rolling average)
     - Update body_patterns with extracted body signals
@@ -73,7 +73,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Use helper functions from `user_memory.py`
     - _Requirements: 2.2, 2.3, 2.4_
 
-  - [ ] 3.4 Implement basic pattern detection
+  - [x] 3.4 Implement basic pattern detection
 
     - Detect if user is in a loop (recurring shallow states)
     - Track trajectory (stuck_shallow_count, regressing, progressing)
@@ -81,7 +81,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Advanced pattern detection (loops/doorways) can be added later
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-  - [ ]\* 3.5 Write unit tests for Deep Agent
+  - [x] 3.5 Write unit tests for Deep Agent
     - Test baseline calculation
     - Test relative depth evaluation
     - Test memory updates
