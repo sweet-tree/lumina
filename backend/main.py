@@ -1,6 +1,8 @@
 from backend.services.rag_service import RAGService
 from backend.services.langgraph_service import LangGraphService
 from backend.routes import checkin
+from backend.routes import multi_agent_checkin
+from backend.startup import startup_handler, shutdown_handler
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -24,6 +26,10 @@ app = FastAPI(
 # This compiles the workflow once and reuses it for all requests
 app.state.langgraph_service = LangGraphService()
 
+# Add startup and shutdown handlers for Multi-Agent Service
+app.add_event_handler("startup", startup_handler)
+app.add_event_handler("shutdown", shutdown_handler)
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -34,7 +40,8 @@ app.add_middleware(
 )
 
 # Register routers
-app.include_router(checkin.router)
+app.include_router(checkin.router)  # Existing v1 endpoint
+app.include_router(multi_agent_checkin.router)  # New v2 multi-agent endpoint
 
 # Request model for chat endpoint
 

@@ -11,7 +11,14 @@ from typing import Optional
 import logging
 
 from ..services.multi_agent_service import get_multi_agent_service, MultiAgentService
-from ..middleware.auth import get_current_user
+
+# TODO: Replace with actual auth when middleware is implemented
+
+
+def get_current_user():
+    """Temporary auth placeholder - returns dummy user"""
+    return {"user_id": "temp_user_123"}
+
 
 logger = logging.getLogger("lumina.multi_agent_checkin")
 
@@ -36,7 +43,8 @@ class CheckinResponse(BaseModel):
 @router.post("/checkin", response_model=CheckinResponse)
 async def multi_agent_checkin(
     request: CheckinRequest,
-    current_user: dict = Depends(get_current_user)
+    # TODO: Add auth back when middleware is implemented
+    # current_user: dict = Depends(get_current_user)
 ):
     """
     Process check-in using Multi-Agent Depth System.
@@ -56,7 +64,8 @@ async def multi_agent_checkin(
         CheckinResponse with response, depth, card decision, etc.
     """
     try:
-        user_id = current_user["user_id"]
+        # TODO: Get user_id from auth when middleware is implemented
+        user_id = "temp_user_123"  # Temporary for testing
 
         logger.info(
             f"Multi-agent check-in for user {user_id}: {request.user_input[:50]}...")
