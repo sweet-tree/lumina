@@ -33,7 +33,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Handle malformed JSON with fallback
     - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-  - [ ] 2.2 Add specificity scoring logic
+  - [x] 2.2 Add specificity scoring logic
 
     - Implement 0-10 scoring in prompt
     - Validate score is within range

@@ -102,9 +102,14 @@ class ExtractionAgent:
             # Validate
             extraction = self._validate_extraction(extraction)
 
-            logger.info(f"Extracted: specificity={extraction['specificity_score']}, "
-                        f"body_signals={len(extraction['body_signals'])}, "
-                        f"triggers={len(extraction['triggers'])}")
+            # Log detailed extraction results
+            logger.info(
+                f"Extraction complete - "
+                f"Specificity: {extraction['specificity_score']}/10, "
+                f"Body signals: {extraction['body_signals']}, "
+                f"Triggers: {extraction['triggers']}, "
+                f"Temporal: {extraction['temporal']}"
+            )
 
             return extraction
 
@@ -167,22 +172,38 @@ class ExtractionAgent:
 
         # Validate types
         if not isinstance(validated["body_signals"], list):
+            logger.warning(
+                f"Invalid body_signals type: {type(validated['body_signals'])}, converting to empty list")
             validated["body_signals"] = []
 
         if not isinstance(validated["triggers"], list):
+            logger.warning(
+                f"Invalid triggers type: {type(validated['triggers'])}, converting to empty list")
             validated["triggers"] = []
 
         # Validate temporal
         if validated["temporal"] not in ["past", "present", "future"]:
+            logger.warning(
+                f"Invalid temporal value: {validated['temporal']}, defaulting to 'present'")
             validated["temporal"] = "present"
 
-        # Validate specificity score
+        # Validate specificity score (0-10 range)
         try:
             score = float(validated["specificity_score"])
-            validated["specificity_score"] = max(
-                0, min(10, score))  # Clamp to 0-10
-        except (ValueError, TypeError):
-            validated["specificity_score"] = 5
+            original_score = score
+
+            # Clamp to 0-10 range
+            validated["specificity_score"] = max(0.0, min(10.0, score))
+
+            if validated["specificity_score"] != original_score:
+                logger.warning(
+                    f"Specificity score {original_score} out of range, "
+                    f"clamped to {validated['specificity_score']}"
+                )
+        except (ValueError, TypeError) as e:
+            logger.warning(
+                f"Invalid specificity_score: {validated['specificity_score']}, defaulting to 5.0")
+            validated["specificity_score"] = 5.0
 
         return validated
 
