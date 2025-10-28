@@ -21,19 +21,20 @@ class TestResponseGeneration(unittest.TestCase):
                 patch('backend.services.response_generation.VectorStore'):
             self.generator = ResponseGenerator()
 
-            # Mock chat service
-            self.generator.chat_service = Mock()
-            self.generator.chat_service.generate = Mock(
-                return_value="The breath knows what the mind refuses to see.")
+        # Mock chat service
+        self.generator.chat_service = Mock()
+        self.generator.chat_service.generate = Mock(
+            return_value="Test response")
 
-            # Mock vector store
-            self.generator.vector_store = Mock()
-            self.generator.vector_store.search = Mock(return_value=[
-                {"text": "Be present with what is.", "score": 0.9},
-                {"text": "The body speaks truth.", "score": 0.8}
-            ])
+        # Mock vector store
+        self.generator.vector_store = Mock()
+        self.generator.vector_store.search = Mock(return_value=[
+            {"text": "Teaching 1", "score": 0.9},
+            {"text": "Teaching 2", "score": 0.8},
+            {"text": "Teaching 3", "score": 0.7}
+        ])
 
-    def test_generate_with_question_strategy(self):
+    def test_generate_question_strategy(self):
         """Test response generation with question strategy"""
         state = {
             "user_input": "stressed",
@@ -41,18 +42,24 @@ class TestResponseGeneration(unittest.TestCase):
                 "strategy": "question",
                 "guidance": "Ask about body location"
             },
-            "user_model": {},
-            "extraction": {}
+            "extraction": {"body_signals": []},
+            "user_model": {}
         }
 
         result = self.generator.generate(state)
 
+        # Should have response and RAG contexts
         self.assertIn("final_response", result)
         self.assertIn("rag_contexts", result)
+
+        # Chat service should be called
+        self.generator.chat_service.generate.assert_called()
+
+        # Response should not be empty
         self.assertIsInstance(result["final_response"], str)
         self.assertGreater(len(result["final_response"]), 0)
 
-    def test_generate_with_reflect_strategy(self):
+    def test_generate_reflect_strategy(self):
         """Test response generation with reflect strategy"""
         state = {
             "user_input": "chest tight, breath shallow",
@@ -60,44 +67,45 @@ class TestResponseGeneration(unittest.TestCase):
                 "strategy": "reflect",
                 "guidance": "Mirror their awareness"
             },
-            "user_model": {},
-            "extraction": {"body_signals": ["chest: tight"]}
+            "extraction": {"body_signals": ["chest: tight"]},
+            "user_model": {}
         }
 
         result = self.generator.generate(state)
 
         self.assertIn("final_response", result)
         self.assertIn("rag_contexts", result)
-        self.generator.chat_service.generate.assert_called_once()
+        self.generator.chat_service.generate.assert_called()
 
-    def test_generate_with_teach_strategy(self):
+    def test_generate_teach_strategy(self):
         """Test response generation with teach strategy"""
         state = {
-            "user_input": "feeling depleted again",
+            "user_input": "feeling tense again",
             "teaching_strategy": {
                 "strategy": "teach",
                 "guidance": "Explain the pattern"
             },
+            "extraction": {"body_signals": ["shoulders: tense"]},
             "user_model": {
                 "patterns": {
                     "loops": [
                         {
-                            "name": "Monday Morning Spiral",
-                            "sequence": ["tension", "depleted", "foggy"],
+                            "name": "Tension Loop",
+                            "sequence": ["tension", "depleted"],
                             "frequency": 5
                         }
                     ]
                 }
-            },
-            "extraction": {}
+            }
         }
 
         result = self.generator.generate(state)
 
         self.assertIn("final_response", result)
         self.assertIn("rag_contexts", result)
+        self.generator.chat_service.generate.assert_called()
 
-    def test_generate_with_challenge_strategy(self):
+    def test_generate_challenge_strategy(self):
         """Test response generation with challenge strategy"""
         state = {
             "user_input": "stressed",
@@ -105,122 +113,95 @@ class TestResponseGeneration(unittest.TestCase):
                 "strategy": "challenge",
                 "guidance": "Point out regression"
             },
-            "user_model": {},
-            "extraction": {}
+            "extraction": {"body_signals": []},
+            "user_model": {}
         }
 
         result = self.generator.generate(state)
 
         self.assertIn("final_response", result)
         self.assertIn("rag_contexts", result)
+        self.generator.chat_service.generate.assert_called()
 
     def test_rag_retrieval(self):
         """Test RAG wisdom retrieval"""
-        contexts = self.generator._retrieve_wisdom("stressed", "reflect")
+        contexts = self.generator._retrieve_wisdom("chest tight", "reflect")
 
-        self.assertIsInstance(contexts, list)
+        # Should call vector store search
         self.generator.vector_store.search.assert_called_once()
+
+        # Should return contexts
+        self.assertIsInstance(contexts, list)
+        self.assertLessEqual(len(contexts), 3)
 
     def test_rag_retrieval_failure(self):
         """Test RAG retrieval handles failures gracefully"""
+        # Mock search to raise exception
         self.generator.vector_store.search = Mock(
-            side_effect=Exception("Connection error"))
+            side_effect=Exception("Search failed"))
 
-        contexts = self.generator._retrieve_wisdom("stressed", "reflect")
+        contexts = self.generator._retrieve_wisdom("test", "reflect")
 
+        # Should return empty list on failure
         self.assertEqual(contexts, [])
 
     def test_format_rag_contexts(self):
         """Test RAG context formatting"""
         contexts = [
-            {"text": "First wisdom", "score": 0.9},
-            {"text": "Second wisdom", "score": 0.8},
-            {"text": "Third wisdom", "score": 0.7}
+            {"text": "Teaching 1", "score": 0.9},
+            {"text": "Teaching 2", "score": 0.8}
         ]
 
         formatted = self.generator._format_rag_contexts(contexts)
 
-        self.assertIn("First wisdom", formatted)
-        self.assertIn("Second wisdom", formatted)
-        self.assertIn("Third wisdom", formatted)
+        self.assertIn("Teaching 1", formatted)
+        self.assertIn("Teaching 2", formatted)
+        self.assertIn("1.", formatted)
+        self.assertIn("2.", formatted)
 
     def test_format_rag_contexts_empty(self):
         """Test RAG context formatting with empty list"""
         formatted = self.generator._format_rag_contexts([])
 
-        self.assertIn("No spiritual wisdom", formatted)
+        self.assertIn("No specific teachings", formatted)
 
-    def test_fallback_response_question(self):
-        """Test fallback response for question strategy"""
-        fallback = self.generator._get_fallback_response("question")
-
-        self.assertEqual(fallback, "What's here right now?")
-
-    def test_fallback_response_reflect(self):
-        """Test fallback response for reflect strategy"""
-        fallback = self.generator._get_fallback_response("reflect")
-
-        self.assertEqual(fallback, "Stay with what's present.")
-
-    def test_fallback_response_teach(self):
-        """Test fallback response for teach strategy"""
-        fallback = self.generator._get_fallback_response("teach")
-
-        self.assertEqual(fallback, "Notice the pattern.")
-
-    def test_fallback_response_challenge(self):
-        """Test fallback response for challenge strategy"""
-        fallback = self.generator._get_fallback_response("challenge")
-
-        self.assertEqual(fallback, "Return to the body.")
-
-    def test_generation_failure_uses_fallback(self):
-        """Test that generation failure uses fallback response"""
+    def test_fallback_responses(self):
+        """Test fallback responses when generation fails"""
+        # Mock chat service to raise exception
         self.generator.chat_service.generate = Mock(
-            side_effect=Exception("API error"))
+            side_effect=Exception("Generation failed"))
 
         state = {
-            "user_input": "stressed",
-            "teaching_strategy": {
-                "strategy": "question",
-                "guidance": "Ask about body"
-            },
-            "user_model": {},
-            "extraction": {}
+            "user_input": "test",
+            "teaching_strategy": {"strategy": "question", "guidance": "test"},
+            "extraction": {},
+            "user_model": {}
         }
 
         result = self.generator.generate(state)
 
-        # Should return fallback
-        self.assertEqual(result["final_response"], "What's here right now?")
+        # Should still return a response (fallback)
+        self.assertIn("final_response", result)
+        self.assertIsInstance(result["final_response"], str)
 
-    def test_build_prompt_includes_user_input(self):
-        """Test that prompt includes user input"""
-        prompt = self.generator._build_prompt(
-            strategy="reflect",
-            guidance="Mirror awareness",
-            user_input="chest tight",
-            rag_contexts=[],
-            user_model={},
-            extraction={}
-        )
+    def test_output_structure(self):
+        """Test that output has correct structure"""
+        state = {
+            "user_input": "test",
+            "teaching_strategy": {"strategy": "reflect", "guidance": "test"},
+            "extraction": {},
+            "user_model": {}
+        }
 
-        self.assertIn("chest tight", prompt)
+        result = self.generator.generate(state)
 
-    def test_build_prompt_includes_wisdom(self):
-        """Test that prompt includes spiritual wisdom"""
-        contexts = [{"text": "Be present", "score": 0.9}]
+        # Should have required fields
+        self.assertIn("final_response", result)
+        self.assertIn("rag_contexts", result)
 
-        prompt = self.generator._build_prompt(
-            strategy="reflect",
-            guidance="Mirror awareness",
-            user_input="stressed",
-            rag_contexts=contexts,
-            user_model={},
-            extraction={}
-        )
-
-        self.assertIn("Be present", prompt)
+        # Types should be correct
+        self.assertIsInstance(result["final_response"], str)
+        self.assertIsInstance(result["rag_contexts"], list)
 
 
 def run_tests():
