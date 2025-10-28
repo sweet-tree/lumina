@@ -123,7 +123,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Don't award card for shallow first attempt
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-  - [x] 5.2 Implement card selection logic
+  - [ ] 5.2 Implement card selection logic
 
     - Select card based on extraction signals
     - Map signals to card library
@@ -131,7 +131,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Return card decision with reason
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-  - [ ]\* 5.3 Write unit tests for Card Agent
+  - [x] 5.3 Write unit tests for Card Agent
     - Test each award criterion
     - Test card selection logic
     - Test rarity determination
@@ -139,7 +139,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
 
 - [ ] 6. Implement Response Generation
 
-  - [ ] 6.1 Create response generation function
+  - [x] 6.1 Create response generation function
 
     - Build prompts for each teaching strategy
     - Integrate RAG retrieval for spiritual wisdom
@@ -147,14 +147,14 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Handle different strategies (question, reflect, teach, challenge)
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [ ] 6.2 Integrate with existing RAG system
+  - [x] 6.2 Integrate with existing RAG system
 
     - Use existing VectorStoreService
     - Retrieve relevant passages based on user input and strategy
     - Format RAG contexts for prompt
     - _Requirements: 7.5_
 
-  - [ ]\* 6.3 Write unit tests for response generation
+  - [x] 6.3 Write unit tests for response generation
     - Test each strategy prompt
     - Test RAG integration
     - Test response quality (manual review)
