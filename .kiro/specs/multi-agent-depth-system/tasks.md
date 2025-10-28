@@ -106,7 +106,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Return trajectory summary
     - _Requirements: 5.1, 5.2_
 
-  - [ ]\* 4.3 Write unit tests for Teaching Agent
+  - [x] 4.3 Write unit tests for Teaching Agent
     - Test each strategy activation condition
     - Test trajectory calculation
     - Test strategy selection logic
@@ -114,7 +114,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
 
 - [ ] 5. Implement Card Agent
 
-  - [ ] 5.1 Create card award decision logic
+  - [x] 5.1 Create card award decision logic
 
     - Award card for deep reflection
     - Award card for multiple check-ins today
@@ -123,7 +123,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Don't award card for shallow first attempt
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-  - [ ] 5.2 Implement card selection logic
+  - [x] 5.2 Implement card selection logic
 
     - Select card based on extraction signals
     - Map signals to card library
