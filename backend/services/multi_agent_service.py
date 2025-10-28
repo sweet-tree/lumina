@@ -19,6 +19,13 @@ from langgraph.store.postgres import PostgresStore
 from langgraph.graph import StateGraph, START, END
 from langgraph.store.base import BaseStore
 
+# Import agent node functions
+from .extraction_agent import extraction_agent_node
+from .deep_agent import deep_agent_node
+from .teaching_agent import teaching_agent_node
+from .card_agent import card_agent_node
+from .response_generation import response_generation_node
+
 # Load environment variables from backend/.env
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(env_path)
@@ -57,18 +64,20 @@ class MultiAgentService:
     """Service for multi-agent depth evaluation system"""
 
     def __init__(self):
-        """Initialize PostgresStore and workflow"""
+        """Initialize service with database URI and Store"""
         self.db_uri = os.getenv("DATABASE_URL")
         if not self.db_uri:
             raise ValueError("DATABASE_URL not found in environment variables")
 
-        # Initialize PostgresStore context manager and enter it
+        # Create Store context manager and enter it (keep alive for service lifetime)
         self._store_cm = PostgresStore.from_conn_string(self.db_uri)
         self.store = self._store_cm.__enter__()
-        logger.info("PostgresStore initialized")
 
-        # Build workflow (agents will be added in later tasks)
-        self.workflow = self._build_workflow()
+        # Build and compile workflow once (reuse for all requests)
+        self.graph = self._build_workflow(self.store)
+
+        logger.info(
+            "MultiAgentService initialized with persistent Store and compiled graph")
 
     def setup_store(self):
         """
@@ -82,24 +91,37 @@ class MultiAgentService:
             logger.error(f"Failed to setup PostgresStore: {e}")
             raise
 
-    def _build_workflow(self) -> StateGraph:
-        """Build LangGraph workflow with agents"""
+    def _build_workflow(self, store: BaseStore):
+        """Build and compile LangGraph workflow with all agents"""
         builder = StateGraph(MultiAgentState)
 
-        # TODO: Add agent nodes in subsequent tasks
-        # builder.add_node("extraction", extraction_agent)
-        # builder.add_node("deep", deep_agent)
-        # builder.add_node("teaching", teaching_agent)
-        # builder.add_node("card", card_agent)
-        # builder.add_node("response", generate_response)
+        # Add agent nodes
+        builder.add_node("extraction", extraction_agent_node)
+        builder.add_node(
+            "deep", lambda state: deep_agent_node(state, store=store))
+        builder.add_node("teaching", teaching_agent_node)
+        builder.add_node("card", card_agent_node)
+        builder.add_node("response", response_generation_node)
 
-        # TODO: Add edges
-        # builder.add_edge(START, "extraction")
-        # builder.add_edge("extraction", "deep")
-        # ...
+        # Configure edges
+        # Sequential: START → Extraction → Deep Agent
+        builder.add_edge(START, "extraction")
+        builder.add_edge("extraction", "deep")
 
-        logger.info("Workflow structure initialized (agents to be added)")
-        return builder
+        # Parallel: Deep Agent → (Teaching Agent + Card Agent)
+        builder.add_edge("deep", "teaching")
+        builder.add_edge("deep", "card")
+
+        # Convergence: (Teaching + Card) → Response Generation
+        builder.add_edge("teaching", "response")
+        builder.add_edge("card", "response")
+
+        # End: Response Generation → END
+        builder.add_edge("response", END)
+
+        logger.info(
+            "Workflow built: extraction → deep → (teaching + card) → response")
+        return builder.compile()
 
     def process_checkin(self, user_id: str, user_input: str, session_id: str = None) -> dict:
         """
@@ -113,20 +135,50 @@ class MultiAgentService:
         Returns:
             dict with response, card_decision, and depth
         """
-        # TODO: Implement in later tasks once agents are built
-        logger.info(f"Processing check-in for user {user_id}")
+        import time
+        start_time = time.time()
 
-        # Placeholder response
-        return {
-            "response": "Multi-agent system not yet implemented",
-            "card_decision": {"award_card": False},
-            "depth": "medium"
+        logger.info(
+            f"Processing check-in for user {user_id}: {user_input[:50]}...")
+
+        # Prepare initial state
+        initial_state = {
+            "user_id": user_id,
+            "user_input": user_input,
+            "session_id": session_id or f"session_{int(time.time())}"
         }
 
+        # Run workflow (graph and store are persistent, reused across requests)
+        try:
+            final_state = self.graph.invoke(initial_state)
+
+            elapsed = time.time() - start_time
+            logger.info(f"Check-in processed in {elapsed:.2f}s")
+
+            # Extract results
+            return {
+                "response": final_state.get("final_response", ""),
+                "card_decision": final_state.get("card_decision", {"award_card": False}),
+                "depth": final_state.get("relative_depth", "medium"),
+                "teaching_strategy": final_state.get("teaching_strategy", {}),
+                "extraction": final_state.get("extraction", {})
+            }
+
+        except Exception as e:
+            logger.error(f"Error processing check-in: {e}", exc_info=True)
+            # Return fallback response
+            return {
+                "response": "What's here right now?",
+                "card_decision": {"award_card": False, "reason": "Error in processing"},
+                "depth": "medium",
+                "error": str(e)
+            }
+
     def close(self):
-        """Close Store connection"""
+        """Close Store connection (call on application shutdown)"""
         if hasattr(self, '_store_cm'):
             self._store_cm.__exit__(None, None, None)
+            logger.info("Store connection closed")
 
 
 # Singleton instance

@@ -112,7 +112,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Test strategy selection logic
     - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 5. Implement Card Agent
+- [x] 5. Implement Card Agent
 
   - [x] 5.1 Create card award decision logic
 
@@ -123,7 +123,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Don't award card for shallow first attempt
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-  - [ ] 5.2 Implement card selection logic
+  - [x] 5.2 Implement card selection logic
 
     - Select card based on extraction signals
     - Map signals to card library
@@ -162,7 +162,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
 
 - [ ] 7. Build LangGraph workflow
 
-  - [ ] 7.1 Create StateGraph with all agents
+  - [x] 7.1 Create StateGraph with all agents
 
     - Define MultiAgentState schema
     - Add Extraction Agent node
@@ -172,7 +172,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Add Response Generation node
     - _Requirements: 10.1, 10.2_
 
-  - [ ] 7.2 Configure workflow edges
+  - [x] 7.2 Configure workflow edges
 
     - Sequential: Extraction → Deep Agent
     - Parallel: Deep Agent → (Teaching Agent + Card Agent)
@@ -180,7 +180,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
     - Add conditional edges if needed
     - _Requirements: 10.1_
 
-  - [ ] 7.3 Compile and test workflow
+  - [x] 7.3 Compile and test workflow
     - Compile StateGraph
     - Test with sample inputs
     - Verify state propagation
