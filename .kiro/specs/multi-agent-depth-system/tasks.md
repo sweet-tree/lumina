@@ -25,7 +25,7 @@ This implementation plan breaks down the Multi-Agent Depth System into discrete,
 
 - [ ] 2. Implement Extraction Agent
 
-  - [ ] 2.1 Create extraction agent node function
+  - [x] 2.1 Create extraction agent node function
 
     - Write prompt template for signal extraction
     - Include few-shot examples in prompt
