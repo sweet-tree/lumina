@@ -323,20 +323,185 @@ def call_llm(prompt: str) -> str:
 
 ## Current Implementation Status
 
-### Active Spec: LangGraph Depth Evaluation
+### Active Spec: Multi-Agent Depth System
 
-**Location:** `.kiro/specs/langgraph-depth-evaluation/`
+**Location:** `.kiro/specs/multi-agent-depth-system/` (to be created)
 
-**Status:** Ready to implement
+**Status:** Architecture finalized, ready for spec creation
 
-**Next Task:** Task 1 - Set up LangGraph dependencies and state definition
+**Previous Implementation:** Basic LangGraph depth evaluation (completed)
 
-**Key Decisions Made:**
+**Key Architecture Decisions:**
 
-1. ✅ State uses `rag_contexts` (plural, list[dict], with reducer)
-2. ✅ Sequential implementation, parallel-ready architecture
-3. ✅ Only installing `langchain-core`, not full `langchain`
-4. ✅ All spec files updated and consistent
+1. ✅ Four-agent system: Extraction, Deep (Memory), Teaching, Card
+2. ✅ Depth is relative to user baseline, not absolute
+3. ✅ LangGraph Store for long-term user memory
+4. ✅ Teaching Agent guides users deeper when stuck
+5. ✅ Card Agent decides rewards (earned, not automatic)
+6. ✅ Separation of concerns (each agent has one job)
+
+---
+
+## Multi-Agent Depth System Architecture
+
+### Overview
+
+Four specialized agents work together to evaluate depth, maintain user memory, guide users deeper, and award cards.
+
+### Agent 1: Extraction Agent
+
+**Responsibility:** Extract structured signal from user input
+
+**Input:** Raw user text
+
+**Output:**
+
+```json
+{
+  "body_signals": ["location: sensation"],
+  "triggers": ["what's causing this"],
+  "temporal": "past/present/future",
+  "specificity_score": 0-10
+}
+```
+
+**Implementation:**
+
+- Single LLM call with structured output
+- Prompt includes examples (few-shot learning)
+- Fast execution (~0.5s)
+
+---
+
+### Agent 2: Deep Agent (Memory)
+
+**Responsibility:** Maintain user model, detect patterns, evaluate relative depth
+
+**Uses LangGraph Store:**
+
+```
+/memories/user_{id}/
+  body_patterns.txt      # Body locations + frequencies
+  triggers.txt           # What causes patterns
+  loops_doorways.txt     # Detected patterns
+  baseline.txt           # User's typical specificity
+  progression.txt        # Trajectory over time
+```
+
+**Key Logic:**
+
+```python
+# Depth is relative to user
+if current_specificity > user_baseline + 2:
+    depth = "deep"
+elif current_specificity < user_baseline - 2:
+    depth = "shallow"
+else:
+    depth = "medium"
+```
+
+**Pattern Detection:**
+
+- **Loops:** Recurring sequences (tension → depleted → foggy)
+- **Doorways:** What breaks loops (awareness → ease)
+- **Triggers:** What causes patterns (meetings, Mondays)
+- **Baseline:** User's typical specificity (rolling average)
+
+---
+
+### Agent 3: Teaching Agent
+
+**Responsibility:** Decide pedagogical strategy
+
+**Strategies:**
+
+1. **Reflect** - Mirror awareness (when doing well)
+2. **Question** - Guide deeper (when stuck shallow)
+3. **Teach** - Explain pattern (when pattern detected)
+4. **Challenge** - Point out regression (when they were deeper)
+
+**Decision Logic:**
+
+```python
+if stuck_shallow_5_days:
+    strategy = "question"  # "Where in your body?"
+elif pattern_detected:
+    strategy = "teach"     # "This is the third time..."
+elif regressing:
+    strategy = "challenge" # "You were deeper before..."
+else:
+    strategy = "reflect"   # "The body speaks..."
+```
+
+**Why it matters:**
+
+- Prevents stagnation
+- Guides users toward embodiment
+- Creates teacher-student relationship
+- Lumina as guide, not just mirror
+
+---
+
+### Agent 4: Card Agent
+
+**Responsibility:** Decide if card earned, which card, what rarity
+
+**Award Criteria:**
+
+**Award card when:**
+
+- Deep reflection (specificity > user_baseline + 2)
+- Multiple check-ins today (commitment)
+- Breakthrough moment (loop broken)
+- Consistent practice (3+ day streak)
+
+**Don't award card when:**
+
+- Shallow check-in (below threshold)
+- First attempt of day (give chance to go deeper)
+- Regressing without awareness
+
+**Card Rarity:**
+
+- **Common:** Daily deep check-ins
+- **Rare:** Weekly pattern detected
+- **Epic:** Monthly consciousness map
+- **Legendary:** Major breakthrough
+
+**Why it matters:**
+
+- Gamification without being "gamey"
+- Rewards depth, not just participation
+- Creates dialogue (no card → question → deeper → card)
+
+---
+
+### Complete Flow
+
+```
+User Input
+    ↓
+Extraction Agent
+    ↓
+Deep Agent (reads/updates Store)
+    ↓
+    ├─→ Teaching Agent (parallel)
+    └─→ Card Agent (parallel)
+         ↓
+Response Generation (uses Teaching strategy + RAG)
+         ↓
+Output: Response + Card (if awarded)
+```
+
+---
+
+### Key Principles
+
+1. **Depth is Relative:** Compare to user's baseline, not absolute scale
+2. **Memory Enables Personalization:** Store tracks patterns over time
+3. **Guidance Over Judgment:** Teaching Agent prevents stagnation
+4. **Earned Rewards:** Cards motivate depth
+5. **Separation of Concerns:** Each agent has one job
 
 ---
 
