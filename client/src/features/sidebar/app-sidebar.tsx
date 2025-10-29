@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, LogOut, ChevronsUpDown } from "lucide-react";
+import { Sparkles, LogOut, ChevronsUpDown, FlaskConical } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -62,6 +62,18 @@ export function AppSidebar() {
                 <Link href="/dashboard/practice">
                   <Sparkles />
                   <span>Practice</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === "/dashboard/multi-agent-test"}
+                tooltip="Multi-Agent Test"
+              >
+                <Link href="/dashboard/multi-agent-test">
+                  <FlaskConical />
+                  <span>Multi-Agent Test</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
